@@ -115,5 +115,15 @@
             android:backgroundTint="#FF5722"
             android:layout_marginStart="5dp"/>
     </LinearLayout>
+    <Button
+        android:id="@+id/btnPtt"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:text="HOLD TO TALK"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:backgroundTint="#FF0000"
+        android:textColor="#FFFFFF"
+        android:layout_marginTop="10dp"/>
 
 </LinearLayout>
