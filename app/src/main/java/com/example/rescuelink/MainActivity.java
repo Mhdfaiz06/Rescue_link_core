@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -17,8 +18,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.MotionEvent;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -62,12 +63,9 @@ public class MainActivity extends AppCompatActivity {
     private Button btnPtt, btnSend, btnDisconnect;
     private EditText inputMessage;
 
-    // Network State
     private final Map<String, String> connectedDevices = new HashMap<>();
     private final Map<String, Integer> deviceScores = new HashMap<>();
 
-    // --- AUDIO CONFIGURATION (OPTIMIZED) ---
-    // 8000Hz = Lower Bandwidth (Better Range) + Clear Voice
     private static final int SAMPLE_RATE = 8000;
     private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
     private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
@@ -76,23 +74,29 @@ public class MainActivity extends AppCompatActivity {
     private AudioTrack audioTrack;
     private boolean isRecording = false;
     private Thread recordingThread;
-    private int minBuffSize; // Calculated dynamically by system
+    private int minBuffSize;
 
-    // Automation & Optimization
     private Handler handler = new Handler(Looper.getMainLooper());
     private boolean isHost = false;
     private boolean isConnected = false;
     private final long SCAN_DURATION = 5000 + new Random().nextInt(3000);
 
-    // Permission Code
     private static final int PERMISSION_REQUEST_CODE = 123;
+    private SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // --- THE FLIGHT RECORDER (Catches invisible crashes) ---
+        prefs = getSharedPreferences("RescuePrefs", MODE_PRIVATE);
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            String error = Log.getStackTraceString(throwable);
+            prefs.edit().putString("last_crash", error).commit();
+            System.exit(2);
+        });
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Bind UI Elements
         statusText = findViewById(R.id.statusText);
         myIdText = findViewById(R.id.myIdText);
         debugLog = findViewById(R.id.debugLog);
@@ -104,40 +108,68 @@ public class MainActivity extends AppCompatActivity {
         myIdText.setText(USER_NICKNAME);
         debugLog.setMovementMethod(new ScrollingMovementMethod());
 
-        connectionsClient = Nearby.getConnectionsClient(this);
+        // --- CHECK FOR PREVIOUS CRASH ---
+        String lastCrash = prefs.getString("last_crash", null);
+        if (lastCrash != null) {
+            statusText.setText("🛑 SYSTEM HALTED DUE TO CRASH");
+            debugLog.setText("⚠️ PASTE THIS TO AI ⚠️\n\n" + lastCrash);
+            prefs.edit().remove("last_crash").apply();
+            return; // Stops here so you can read the log
+        }
 
-        // --- CRASH PREVENTION: Check Permissions FIRST ---
-        if (hasPermissions()) {
-            initAppLogic();
-        } else {
-            requestPermissions();
+        try {
+            connectionsClient = Nearby.getConnectionsClient(this);
+            if (hasPermissions()) {
+                initAppLogic();
+            } else {
+                requestPermissions();
+            }
+        } catch (Exception e) {
+            debugLog.setText("CRASH IN ONCREATE: " + e.getMessage());
         }
     }
 
     // ==========================================
-    //      PERMISSION HANDLING
+    //      CRASH-PROOF PERMISSION HANDLING
     // ==========================================
-
     private boolean hasPermissions() {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+        // FIXED: Using raw API number 33 instead of 'TIRAMISU' so older Android Studios don't panic
+        if (Build.VERSION.SDK_INT >= 33) {
+            return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_ADVERTISE) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, "android.permission.NEARBY_WIFI_DEVICES") == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+        } else if (Build.VERSION.SDK_INT >= 31) {
+            return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_ADVERTISE) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+        } else {
+            return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+        }
     }
 
     private void requestPermissions() {
         String[] permissions;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT >= 33) {
             permissions = new String[]{
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.BLUETOOTH_SCAN,
-                    Manifest.permission.BLUETOOTH_ADVERTISE,
-                    Manifest.permission.BLUETOOTH_CONNECT,
-                    Manifest.permission.NEARBY_WIFI_DEVICES,
+                    Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.BLUETOOTH_ADVERTISE, Manifest.permission.BLUETOOTH_CONNECT,
+                    "android.permission.NEARBY_WIFI_DEVICES", Manifest.permission.RECORD_AUDIO
+            };
+        } else if (Build.VERSION.SDK_INT >= 31) {
+            permissions = new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.BLUETOOTH_ADVERTISE, Manifest.permission.BLUETOOTH_CONNECT,
                     Manifest.permission.RECORD_AUDIO
             };
         } else {
             permissions = new String[]{
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
                     Manifest.permission.RECORD_AUDIO
             };
         }
@@ -148,23 +180,30 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            boolean allGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) allGranted = false;
+            }
+            if (allGranted && grantResults.length > 0) {
                 log("Permissions Granted! Starting System...");
                 initAppLogic();
             } else {
-                Toast.makeText(this, "Permissions Denied. App cannot function.", Toast.LENGTH_LONG).show();
-                finish();
+                statusText.setText("🛑 PERMISSIONS DENIED BY OS");
+                debugLog.setText("Android refused to grant a permission. Please allow in phone settings.");
             }
         }
     }
 
     private void initAppLogic() {
-        setupAudio();
-        setupListeners();
-
-        log("AUTO: Initializing Self-Healing Network...");
-        startAutonomousNetwork();
-        startOptimizationLoop();
+        try {
+            setupAudio();
+            setupListeners();
+            log("AUTO: Initializing Self-Healing Network...");
+            startAutonomousNetwork();
+            startOptimizationLoop();
+        } catch (Exception e) {
+            log("CRASH CAUGHT IN INIT: " + e.getMessage());
+        }
     }
 
     private void setupListeners() {
@@ -174,82 +213,62 @@ public class MainActivity extends AppCompatActivity {
                 startAutonomousNetwork();
             });
         }
-
         if (btnSend != null) {
             btnSend.setOnClickListener(v -> {
                 String text = inputMessage.getText().toString();
                 if (!TextUtils.isEmpty(text)) {
-                    String fullMessage = "M:" + USER_NICKNAME + ": " + text;
-                    sendPayloadToAll(fullMessage.getBytes(StandardCharsets.UTF_8));
+                    sendPayloadToAll(("M:" + USER_NICKNAME + ": " + text).getBytes(StandardCharsets.UTF_8));
                     inputMessage.setText("");
                     log("Me: " + text);
                 }
             });
         }
-
         if (btnPtt != null) {
             btnPtt.setOnTouchListener((v, event) -> {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        btnPtt.setBackgroundColor(0xFF00FF00);
-                        btnPtt.setText("TRANSMITTING...");
-                        startRecording();
-                        return true;
+                        btnPtt.setBackgroundColor(0xFF00FF00); btnPtt.setText("TRANSMITTING..."); startRecording(); return true;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
-                        btnPtt.setBackgroundColor(0xFFFF0000);
-                        btnPtt.setText("HOLD TO TALK");
-                        stopRecording();
-                        return true;
+                        btnPtt.setBackgroundColor(0xFFFF0000); btnPtt.setText("HOLD TO TALK"); stopRecording(); return true;
                 }
                 return false;
             });
         }
     }
 
-    // ==========================================
-    //      AUDIO ENGINE (LATENCY & CRACK FIXED)
-    // ==========================================
-
     private void setupAudio() {
-        // 1. Ask system for correct buffer size
-        minBuffSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
+        try {
+            minBuffSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
+            if (minBuffSize <= 0 || minBuffSize == AudioRecord.ERROR || minBuffSize == AudioRecord.ERROR_BAD_VALUE) minBuffSize = 3840;
 
-        // 2. Safety Check: If system fails, use safe default (3840 bytes)
-        if (minBuffSize == AudioRecord.ERROR || minBuffSize == AudioRecord.ERROR_BAD_VALUE) {
-            minBuffSize = 3840;
+            audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO, AUDIO_FORMAT, minBuffSize, AudioTrack.MODE_STREAM);
+            if (audioTrack.getState() == AudioTrack.STATE_INITIALIZED) {
+                audioTrack.play();
+            } else {
+                log("WARNING: Speaker hardware is locked by a ghost process.");
+            }
+        } catch (Exception e) {
+            log("CRASH CAUGHT (Audio): " + e.getMessage());
         }
-
-        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO, AUDIO_FORMAT, minBuffSize, AudioTrack.MODE_STREAM);
-        audioTrack.play();
     }
 
     private void startRecording() {
-        if (connectedDevices.isEmpty()) return;
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) return;
-
+        if (connectedDevices.isEmpty() || ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) return;
         isRecording = true;
 
-        // 1. Calculate the Size
         int calcSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
+        if (calcSize == AudioRecord.ERROR || calcSize == AudioRecord.ERROR_BAD_VALUE) calcSize = 3840;
 
-        // 2. Fix it if it's broken (Modifying the variable)
-        if (calcSize == AudioRecord.ERROR || calcSize == AudioRecord.ERROR_BAD_VALUE) {
-            calcSize = 3840;
-        }
-
-        // 3. THE FIX: Create a 'Final' copy that the Thread can trust
+        // THE FIX: This variable MUST be 'final' so the background thread can use it
         final int safeBufferSize = calcSize;
 
         audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT, safeBufferSize);
         audioRecord.startRecording();
 
         recordingThread = new Thread(() -> {
-            // LATENCY TRICK: Read HALF the buffer size
-            // Use the 'safeBufferSize' (which is now final/constant)
-            int fastChunkSize = safeBufferSize / 2;
+            int fastChunkSize = safeBufferSize / 2; // Uses the final variable
             byte[] buffer = new byte[fastChunkSize];
-
             while (isRecording) {
                 int bytesRead = audioRecord.read(buffer, 0, fastChunkSize);
                 if (bytesRead > 0) {
@@ -262,15 +281,10 @@ public class MainActivity extends AppCompatActivity {
         });
         recordingThread.start();
     }
-
     private void stopRecording() {
         isRecording = false;
         if (audioRecord != null) { audioRecord.stop(); audioRecord.release(); audioRecord = null; }
     }
-
-    // ==========================================
-    //      OPTIMIZATION (BATTERY MONITOR)
-    // ==========================================
 
     private int getBatteryLevel() {
         IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
@@ -288,9 +302,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 if (isConnected) {
-                    int myScore = getBatteryLevel();
-                    String statusPacket = "S:" + myScore; // 'S' Tag for Score
-                    sendPayloadToAll(statusPacket.getBytes(StandardCharsets.UTF_8));
+                    sendPayloadToAll(("S:" + getBatteryLevel()).getBytes(StandardCharsets.UTF_8));
                 }
                 handler.postDelayed(this, 10000);
             }
@@ -298,27 +310,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkNetworkHealth(String senderId, int theirScore) {
-        if (!isHost && connectedDevices.containsKey(senderId)) {
-            // If Host has < 15% battery, leave them.
-            if (theirScore < 15) {
-                log("⚠️ WARNING: Host Battery Critical (" + theirScore + "%). Searching for new Host...");
-                disconnectAll();
-                startAutonomousNetwork();
-            }
+        if (!isHost && connectedDevices.containsKey(senderId) && theirScore < 15) {
+            log("⚠️ WARNING: Host Battery Critical. Searching for new Host...");
+            disconnectAll();
+            startAutonomousNetwork();
         }
     }
 
-    // ==========================================
-    //      AUTONOMOUS CONNECTION LOGIC
-    // ==========================================
-
     private void startAutonomousNetwork() {
         if (isConnected) return;
-
         isHost = false;
         statusText.setText("Status: Auto-Scanning...");
         startDiscovery();
-
         handler.postDelayed(becomeHostRunnable, SCAN_DURATION);
     }
 
@@ -333,26 +336,24 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    // ==========================================
-    //      NEARBY CONNECTIONS
-    // ==========================================
-
     private void startAdvertising() {
-        AdvertisingOptions options = new AdvertisingOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build();
-        connectionsClient.startAdvertising(USER_NICKNAME, SERVICE_ID, connectionLifecycleCallback, options)
-                .addOnSuccessListener(unused -> {
-                    isHost = true;
-                    statusText.setText("Status: HOST (Leader)");
-                    log("SYSTEM: Network Created. Waiting...");
-                })
-                .addOnFailureListener(e -> log("Adv Error: " + e.getMessage()));
+        try {
+            AdvertisingOptions options = new AdvertisingOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build();
+            connectionsClient.startAdvertising(USER_NICKNAME, SERVICE_ID, connectionLifecycleCallback, options)
+                    .addOnSuccessListener(unused -> { isHost = true; statusText.setText("Status: HOST (Leader)"); log("SYSTEM: Network Created."); })
+                    .addOnFailureListener(e -> log("Adv Error: " + e.getMessage()));
+        } catch (Exception e) {
+            log("CRASH CAUGHT (Adv): " + e.getMessage());
+        }
     }
 
     private void startDiscovery() {
-        DiscoveryOptions options = new DiscoveryOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build();
-        connectionsClient.startDiscovery(SERVICE_ID, endpointDiscoveryCallback, options)
-                .addOnSuccessListener(unused -> {})
-                .addOnFailureListener(e -> log("Disc Error: " + e.getMessage()));
+        try {
+            DiscoveryOptions options = new DiscoveryOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build();
+            connectionsClient.startDiscovery(SERVICE_ID, endpointDiscoveryCallback, options).addOnFailureListener(e -> log("Disc Error: " + e.getMessage()));
+        } catch (Exception e) {
+            log("CRASH CAUGHT (Disc): " + e.getMessage());
+        }
     }
 
     private final EndpointDiscoveryCallback endpointDiscoveryCallback = new EndpointDiscoveryCallback() {
@@ -373,7 +374,6 @@ public class MainActivity extends AppCompatActivity {
             connectionsClient.acceptConnection(endpointId, payloadCallback);
             connectedDevices.put(endpointId, info.getEndpointName());
         }
-
         @Override
         public void onConnectionResult(@NonNull String endpointId, @NonNull ConnectionResolution result) {
             if (result.getStatus().isSuccess()) {
@@ -386,7 +386,6 @@ public class MainActivity extends AppCompatActivity {
                 if (!isHost && connectedDevices.isEmpty()) startAutonomousNetwork();
             }
         }
-
         @Override
         public void onDisconnected(@NonNull String endpointId) {
             log("<<< Disconnected: " + connectedDevices.remove(endpointId));
@@ -399,10 +398,6 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    // ==========================================
-    //      DATA HANDLING (ROUTING)
-    // ==========================================
-
     private final PayloadCallback payloadCallback = new PayloadCallback() {
         @Override
         public void onPayloadReceived(@NonNull String endpointId, @NonNull Payload payload) {
@@ -411,19 +406,16 @@ public class MainActivity extends AppCompatActivity {
                 if (receivedBytes == null) return;
                 char tag = (char) receivedBytes[0];
 
-                if (tag == 'A') { // Audio
+                if (tag == 'A') {
                     if (audioTrack != null) audioTrack.write(receivedBytes, 1, receivedBytes.length - 1);
                     if (isHost) relayPayload(endpointId, receivedBytes);
-                }
-                else if (tag == 'M') { // Message
+                } else if (tag == 'M') {
                     String message = new String(receivedBytes, StandardCharsets.UTF_8).substring(2);
                     log(message);
                     if (isHost) relayPayload(endpointId, receivedBytes);
-                }
-                else if (tag == 'S') { // SCORE (Health Check)
-                    String scoreStr = new String(receivedBytes, StandardCharsets.UTF_8).substring(2);
+                } else if (tag == 'S') {
                     try {
-                        int score = Integer.parseInt(scoreStr);
+                        int score = Integer.parseInt(new String(receivedBytes, StandardCharsets.UTF_8).substring(2));
                         deviceScores.put(endpointId, score);
                         checkNetworkHealth(endpointId, score);
                     } catch (NumberFormatException e) {}
@@ -449,6 +441,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void disconnectAll() {
+        // THE FIX: Kill any rogue "Become Host" timers hiding in the background
+        handler.removeCallbacks(becomeHostRunnable);
+
         connectionsClient.stopAllEndpoints();
         connectionsClient.stopAdvertising();
         connectionsClient.stopDiscovery();
@@ -462,8 +457,27 @@ public class MainActivity extends AppCompatActivity {
         String timestamp = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
         runOnUiThread(() -> {
             debugLog.append("\n[" + timestamp + "] " + message);
-            final int scrollAmount = debugLog.getLayout().getLineTop(debugLog.getLineCount()) - debugLog.getHeight();
-            if (scrollAmount > 0) debugLog.scrollTo(0, scrollAmount);
+
+            // THE FIX: Check if the screen has finished drawing before scrolling!
+            if (debugLog.getLayout() != null) {
+                final int scrollAmount = debugLog.getLayout().getLineTop(debugLog.getLineCount()) - debugLog.getHeight();
+                if (scrollAmount > 0) debugLog.scrollTo(0, scrollAmount);
+            }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            disconnectAll();
+            handler.removeCallbacksAndMessages(null);
+            if (audioTrack != null) {
+                if (audioTrack.getState() == AudioTrack.STATE_INITIALIZED) audioTrack.stop();
+                audioTrack.release();
+                audioTrack = null;
+            }
+            stopRecording();
+        } catch (Exception e) {}
     }
 }
