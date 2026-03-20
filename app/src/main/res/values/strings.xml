@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">RescueLink</string>
+    <string name="status_scanning">Status: Scanning Regions...</string>
+    <string name="status_host">Status: HOST (Leader)</string>
+    <string name="ptt_talking">TALKING...</string>
+    <string name="ptt_idle">HOLD TO TALK</string>
 </resources>
