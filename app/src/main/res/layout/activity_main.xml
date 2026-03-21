@@ -103,5 +103,12 @@
         android:backgroundTint="#FF0000"
         android:textColor="#FFFFFF"
         android:layout_marginTop="10dp"/>
+    <Button
+        android:id="@+id/btnSos"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🚨 Send SOS"
+        android:backgroundTint="#D32F2F"
+        android:textColor="#FFFFFF" />
 
 </LinearLayout>

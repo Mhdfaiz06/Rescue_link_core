@@ -1,7 +1,19 @@
 <resources>
     <string name="app_name">RescueLink</string>
-    <string name="status_scanning">Status: Scanning Regions...</string>
-    <string name="status_host">Status: HOST (Leader)</string>
-    <string name="ptt_talking">TALKING...</string>
-    <string name="ptt_idle">HOLD TO TALK</string>
+
+    <!-- PTT button states — referenced in MainActivity -->
+    <string name="ptt_idle">🎙 Hold to Talk</string>
+    <string name="ptt_talking">📡 Transmitting…</string>
+
+    <!-- Status messages — avoids hardcoded setText strings -->
+    <string name="status_scanning">Scanning for mesh…</string>
+    <string name="status_host">Hosting mesh node</string>
+    <string name="status_sos_active">SOS ACTIVE — Broadcasting on all channels</string>
+    <string name="status_sos_received">🚨 SOS FROM %1$s</string>
+    <string name="status_permissions_denied">Permissions required — please restart and allow all</string>
+
+    <!-- Log messages -->
+    <string name="log_repeater_only">DEVICE: Repeater-only mode (API %1$d). PTT unavailable.</string>
+    <string name="log_permissions_denied">ERROR: Required permissions denied. Mesh cannot start.</string>
+    <string name="log_permissions_instruction">Please grant Location, Microphone, and Nearby Devices permissions.</string>
 </resources>
