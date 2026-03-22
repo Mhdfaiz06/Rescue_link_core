@@ -23,41 +23,36 @@ import java.util.concurrent.Executors;
 
 public class OpusAudioManager {
 
-    private static final int SAMPLE_RATE = 16000;
-    private static final int BITRATE     = 12000;
+    // 48000Hz matches Opus internal sample rate — decoder always outputs 48000Hz
+    private static final int SAMPLE_RATE = 48000;
+    private static final int BITRATE     = 12000; // controls packet size, not sample rate
 
-    // WeakReference prevents memory leak if Activity is destroyed
     private final WeakReference<Context> contextRef;
     private final TransportBroker broker;
     private final String myMeshId;
 
-    // True only on API 29+ — older devices work as repeaters but cannot transmit voice
     private final boolean canEncode;
+    private volatile boolean isDecoderReady = false;
 
     private AudioRecord audioRecord;
-    private AudioTrack  audioTrack;
-    private MediaCodec  encoder;
-    private MediaCodec  decoder;
-    private boolean     isRecording = false;
+    private volatile AudioTrack audioTrack;
+    private MediaCodec encoder;
+    private MediaCodec decoder;
+    private boolean isRecording = false;
 
-    // ExecutorService instead of raw threads — cleaner lifecycle management
     private ExecutorService encoderExecutor;
     private ExecutorService decoderExecutor;
 
-    // Accurate timestamp tracking for contiguous presentation timestamps
     private long encoderPresentationTimeUs = 0;
 
     public OpusAudioManager(TransportBroker broker, String myMeshId, Context context) {
         this.contextRef = new WeakReference<>(context.getApplicationContext());
         this.broker     = broker;
         this.myMeshId   = myMeshId;
-        this.canEncode  = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q; // Q = API 29
+        this.canEncode  = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
         setupDecoder();
     }
 
-    // Returns true if this device can transmit voice (API 29+)
-    // Returns false if device is repeater-only (API 24–28)
-    // MainActivity uses this to show/hide the PTT button
     public boolean canTransmitAudio() {
         return canEncode;
     }
@@ -68,51 +63,145 @@ public class OpusAudioManager {
         MediaFormat format = MediaFormat.createAudioFormat(
                 MediaFormat.MIMETYPE_AUDIO_OPUS, SAMPLE_RATE, 1);
         format.setInteger(MediaFormat.KEY_BIT_RATE, BITRATE);
-        format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 4096);
+        format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 8192);
 
         encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_OPUS);
         encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         encoder.start();
 
-        encoderExecutor = Executors.newFixedThreadPool(2); // input + output threads
-        encoderPresentationTimeUs = 0; // reset timestamp on each recording session
+        encoderExecutor = Executors.newFixedThreadPool(2);
+        encoderPresentationTimeUs = 0;
     }
 
     // ─── Decoder Setup ───────────────────────────────────────────────────
-    // Opus decoding is supported from API 21 — works on all devices this app targets
 
     private void setupDecoder() {
+        Log.e("AUDIO_TEST", "setupDecoder() called on API " + Build.VERSION.SDK_INT);
         try {
             MediaFormat format = MediaFormat.createAudioFormat(
                     MediaFormat.MIMETYPE_AUDIO_OPUS, SAMPLE_RATE, 1);
-            format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 4096);
+            format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 8192);
 
             decoder = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_AUDIO_OPUS);
             decoder.configure(format, null, null, 0);
             decoder.start();
 
-            decoderExecutor = Executors.newSingleThreadExecutor();
+            // Two threads — one feeds input, one drains output continuously
+            decoderExecutor = Executors.newFixedThreadPool(2);
 
-            int bufSize = AudioTrack.getMinBufferSize(SAMPLE_RATE,
-                    AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-            audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE,
-                    AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
-                    bufSize * 2, AudioTrack.MODE_STREAM);
-            audioTrack.play();
+            // AudioTrack is NOT created here
+            // It is created in recreateAudioTrack() when INFO_OUTPUT_FORMAT_CHANGED fires
+            // because the decoder tells us the real output sample rate at that point
+
+            isDecoderReady = true;
+            Log.e("AUDIO_TEST", "Decoder initialized successfully");
+
+            startDecoderOutputLoop();
 
         } catch (IOException e) {
-            Log.e("OpusAudio", "Decoder setup failed: " + e.getMessage());
+            isDecoderReady = false;
+            Log.e("AUDIO_TEST", "Decoder setup FAILED: " + e.getMessage());
+            Log.e("AUDIO_TEST", "Stack: " + Log.getStackTraceString(e));
         }
+    }
+
+    // ─── Decoder Output Loop ─────────────────────────────────────────────
+    // Runs permanently — drains decoded PCM from decoder and writes to speaker
+    // Separated from input feeding because MediaCodec buffers internally
+    // and won't output until several frames have been fed
+
+    private void startDecoderOutputLoop() {
+        decoderExecutor.execute(() -> {
+            Log.d("AUDIO_TRACE", "Decoder output loop started");
+            while (isDecoderReady) {
+                if (decoder == null) break;
+                try {
+                    MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+                    int outputIndex = decoder.dequeueOutputBuffer(info, 100000);
+
+                    if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                        // Decoder is telling us its actual output format
+                        // Read the real sample rate and recreate AudioTrack to match
+                        MediaFormat actualFormat = decoder.getOutputFormat();
+                        int actualSampleRate = actualFormat.containsKey(MediaFormat.KEY_SAMPLE_RATE)
+                                ? actualFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+                                : SAMPLE_RATE;
+                        int actualChannels = actualFormat.containsKey(MediaFormat.KEY_CHANNEL_COUNT)
+                                ? actualFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+                                : 1;
+                        Log.e("AUDIO_TEST", "Decoder actual output: "
+                                + actualSampleRate + "Hz " + actualChannels + "ch");
+                        recreateAudioTrack(actualSampleRate, actualChannels);
+                        continue;
+                    }
+
+                    if (outputIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
+                        continue;
+                    }
+
+                    if (outputIndex >= 0) {
+                        ByteBuffer buf = decoder.getOutputBuffer(outputIndex);
+                        if (buf != null && info.size > 0) {
+                            byte[] pcm = new byte[info.size];
+                            buf.position(info.offset);
+                            buf.limit(info.offset + info.size);
+                            buf.get(pcm);
+                            AudioTrack track = audioTrack; // local ref — thread safe
+                            if (track != null) {
+                                track.write(pcm, 0, pcm.length);
+                                Log.d("AUDIO_TRACE", "PCM written: " + pcm.length + " bytes");
+                            }
+                        }
+                        decoder.releaseOutputBuffer(outputIndex, false);
+                    }
+
+                } catch (IllegalStateException e) {
+                    isDecoderReady = false;
+                    Log.w("OpusAudio", "Decoder output loop stopped: " + e.getMessage());
+                    break;
+                } catch (Exception e) {
+                    Log.e("OpusAudio", "Decoder output error: " + e.getMessage());
+                }
+            }
+            Log.d("AUDIO_TRACE", "Decoder output loop ended");
+        });
+    }
+
+    private void recreateAudioTrack(int sampleRate, int channels) {
+        // Stop and release old AudioTrack before creating new one
+        AudioTrack old = audioTrack;
+        audioTrack = null;
+        if (old != null) {
+            old.stop();
+            old.release();
+        }
+
+        int channelConfig = channels == 2
+                ? AudioFormat.CHANNEL_OUT_STEREO
+                : AudioFormat.CHANNEL_OUT_MONO;
+
+        int bufSize = AudioTrack.getMinBufferSize(
+                sampleRate, channelConfig, AudioFormat.ENCODING_PCM_16BIT);
+
+        AudioTrack track = new AudioTrack(
+                AudioManager.STREAM_MUSIC,
+                sampleRate,
+                channelConfig,
+                AudioFormat.ENCODING_PCM_16BIT,
+                bufSize * 2,
+                AudioTrack.MODE_STREAM);
+        track.play();
+        audioTrack = track;
+
+        Log.e("AUDIO_TEST", "AudioTrack recreated at " + sampleRate + "Hz");
     }
 
     // ─── Recording ───────────────────────────────────────────────────────
 
     public void startRecording() {
-        // Guard: devices on API 24–28 cannot encode Opus — they act as repeaters only
-        // MainActivity hides the PTT button for these devices via canTransmitAudio()
-        // but this guard ensures no crash even if called accidentally
+        Log.e("AUDIO_TEST", "startRecording() called");
         if (!canEncode) {
-            Log.d("OpusAudio", "Opus encoding not supported on API " + Build.VERSION.SDK_INT);
+            Log.d("OpusAudio", "Encoding not supported on API " + Build.VERSION.SDK_INT);
             return;
         }
 
@@ -145,21 +234,18 @@ public class OpusAudioManager {
                 if (read <= 0) continue;
 
                 int inputIndex = encoder.dequeueInputBuffer(10000);
-                if (inputIndex < 0) continue; // timeout, try again next loop
+                if (inputIndex < 0) continue;
 
                 ByteBuffer buf = encoder.getInputBuffer(inputIndex);
                 if (buf != null) {
                     buf.clear();
                     buf.put(inputBuf, 0, read);
-                    // Accurate contiguous timestamp — avoids decoder jitter
-                    // Calculated from actual sample count, not wall clock
                     encoder.queueInputBuffer(inputIndex, 0, read,
                             encoderPresentationTimeUs, 0);
-                    // read is in bytes, PCM 16-bit = 2 bytes per sample
                     encoderPresentationTimeUs += (read / 2) * 1_000_000L / SAMPLE_RATE;
                 }
             }
-            // Signal end of stream cleanly so encoder flushes remaining frames
+            // Signal end of stream so encoder flushes remaining frames
             int inputIndex = encoder.dequeueInputBuffer(10000);
             if (inputIndex >= 0) {
                 encoder.queueInputBuffer(inputIndex, 0, 0, 0,
@@ -173,36 +259,39 @@ public class OpusAudioManager {
             while (isRecording) {
                 int outputIndex = encoder.dequeueOutputBuffer(info, 10000);
 
-                // Format negotiation at codec startup — must handle before reading data
                 if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                     Log.d("OpusAudio", "Encoder format changed: " + encoder.getOutputFormat());
                     continue;
                 }
-
-                // Nothing ready yet — loop and try again
                 if (outputIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
                     continue;
                 }
 
                 if (outputIndex >= 0) {
-                    // Skip codec config frames — these are headers, not audio data
-                    boolean isConfig = (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0;
-                    if (!isConfig && info.size > 0) {
-                        ByteBuffer buf = encoder.getOutputBuffer(outputIndex);
-                        if (buf != null) {
-                            byte[] compressed = new byte[info.size];
-                            buf.position(info.offset);
-                            buf.limit(info.offset + info.size);
-                            buf.get(compressed);
+                    ByteBuffer buf = encoder.getOutputBuffer(outputIndex);
+                    if (buf != null && info.size > 0) {
+                        byte[] compressed = new byte[info.size];
+                        buf.position(info.offset);
+                        buf.limit(info.offset + info.size);
+                        buf.get(compressed);
 
-                            MeshPacket packet = new MeshPacket(
-                                    'A', myMeshId, MeshPacket.BROADCAST_ID, compressed);
-                            broker.send(packet);
-                        }
+                        boolean isConfig =
+                                (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0;
+
+                        // Prefix every packet with 1 marker byte
+                        // 0x01 = codec config frame — receiver feeds to decoder as CSD
+                        // 0x00 = normal audio frame
+                        byte[] packetData = new byte[1 + compressed.length];
+                        packetData[0] = isConfig ? (byte) 0x01 : (byte) 0x00;
+                        System.arraycopy(compressed, 0, packetData, 1, compressed.length);
+
+                        MeshPacket packet = new MeshPacket(
+                                'A', myMeshId, MeshPacket.BROADCAST_ID, packetData);
+                        broker.send(packet);
+                        Log.d("AUDIO_TRACE", (isConfig ? "Config" : "Audio")
+                                + " frame sent: " + compressed.length + " bytes");
                     }
                     encoder.releaseOutputBuffer(outputIndex, false);
-
-                    // End of stream reached — exit output loop
                     if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) break;
                 }
             }
@@ -211,44 +300,63 @@ public class OpusAudioManager {
 
     // ─── Playback ────────────────────────────────────────────────────────
 
-    // Called from mesh receive thread — offloaded to decoder executor to avoid blocking mesh
-    public void playIncomingAudio(byte[] opusData) {
-        if (decoder == null || audioTrack == null
-                || decoderExecutor == null || decoderExecutor.isShutdown()) return;
+    public void playIncomingAudio(byte[] rawData) {
+        Log.e("AUDIO_TEST", "playIncomingAudio() called, size: "
+                + (rawData == null ? "null" : rawData.length));
 
+        if (!isDecoderReady || decoder == null
+                || decoderExecutor == null || decoderExecutor.isShutdown()) {
+            Log.w("AUDIO_TRACE", "Dropping frame — decoder not ready");
+            return;
+        }
+
+        if (rawData == null || rawData.length < 2) {
+            Log.w("AUDIO_TRACE", "Dropping frame — too small");
+            return;
+        }
+
+        final byte marker = rawData[0];
+        final byte[] opusData = new byte[rawData.length - 1];
+        System.arraycopy(rawData, 1, opusData, 0, opusData.length);
+
+        Log.d("AUDIO_TRACE", "Feeding " + (marker == 0x01 ? "CONFIG" : "AUDIO")
+                + " frame: " + opusData.length + " bytes");
+
+        // Only feeds input — output loop drains PCM continuously in background
         decoderExecutor.execute(() -> {
-            // Feed compressed Opus frame into decoder input
-            int inputIndex = decoder.dequeueInputBuffer(10000);
-            if (inputIndex >= 0) {
+            if (!isDecoderReady || decoder == null) return;
+            try {
+                int inputIndex = decoder.dequeueInputBuffer(10000);
+                if (inputIndex < 0) {
+                    Log.w("AUDIO_TRACE", "No input buffer available, dropping frame");
+                    return;
+                }
+
                 ByteBuffer buf = decoder.getInputBuffer(inputIndex);
-                if (buf != null) {
-                    buf.clear();
-                    buf.put(opusData);
+                if (buf == null) return;
+
+                buf.clear();
+                if (opusData.length > buf.capacity()) {
+                    Log.e("AUDIO_TRACE", "Frame too large: " + opusData.length);
+                    decoder.queueInputBuffer(inputIndex, 0, 0, 0, 0);
+                    return;
+                }
+                buf.put(opusData);
+
+                if (marker == 0x01) {
+                    decoder.queueInputBuffer(inputIndex, 0, opusData.length,
+                            0, MediaCodec.BUFFER_FLAG_CODEC_CONFIG);
+                    Log.d("AUDIO_TRACE", "Config frame queued");
+                } else {
                     decoder.queueInputBuffer(inputIndex, 0, opusData.length,
                             System.nanoTime() / 1000, 0);
                 }
-            }
 
-            // Pull decoded PCM and write directly to speaker
-            MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-            int outputIndex = decoder.dequeueOutputBuffer(info, 10000);
-
-            // Format negotiation at decoder startup — nothing to read yet
-            if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                Log.d("OpusAudio", "Decoder format changed: " + decoder.getOutputFormat());
-                return;
-            }
-
-            if (outputIndex >= 0) {
-                ByteBuffer buf = decoder.getOutputBuffer(outputIndex);
-                if (buf != null && info.size > 0) {
-                    byte[] pcm = new byte[info.size];
-                    buf.position(info.offset);
-                    buf.limit(info.offset + info.size);
-                    buf.get(pcm);
-                    audioTrack.write(pcm, 0, pcm.length);
-                }
-                decoder.releaseOutputBuffer(outputIndex, false);
+            } catch (IllegalStateException e) {
+                isDecoderReady = false;
+                Log.w("OpusAudio", "Decoder input error: " + e.getMessage());
+            } catch (Exception e) {
+                Log.e("OpusAudio", "Decoder input error: " + e.getMessage());
             }
         });
     }
@@ -258,8 +366,6 @@ public class OpusAudioManager {
     public void stopRecording() {
         isRecording = false;
         if (encoderExecutor != null) {
-            // shutdown() — lets the current encoding task finish cleanly before stopping
-            // shutdownNow() would interrupt mid-flight and leave MediaCodec in dirty state
             encoderExecutor.shutdown();
             encoderExecutor = null;
         }
@@ -277,14 +383,16 @@ public class OpusAudioManager {
 
     public void release() {
         stopRecording();
+        isDecoderReady = false; // set before releasing — blocks any queued frames
         if (decoderExecutor != null) {
             decoderExecutor.shutdown();
             decoderExecutor = null;
         }
-        if (audioTrack != null) {
-            audioTrack.stop();
-            audioTrack.release();
-            audioTrack = null;
+        AudioTrack track = audioTrack;
+        audioTrack = null;
+        if (track != null) {
+            track.stop();
+            track.release();
         }
         if (decoder != null) {
             decoder.stop();

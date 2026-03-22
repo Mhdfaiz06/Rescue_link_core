@@ -240,6 +240,9 @@ public class MainActivity extends AppCompatActivity {
     // ==========================================
 
     private void handleIncomingPacket(MeshPacket packet, String sourceId) {
+
+        Log.e("AUDIO_TEST", "Packet received tag: " + packet.tag
+                + " from: " + packet.originId); // ← add this
         // Teach the routing table how to reach this origin next time
         nearbyManager.updateRoutingTable(packet.originId, sourceId);
 
