@@ -58,6 +58,18 @@ public class MeshPacket {
                 seq, ttl, transport, payload);
     }
 
+    public byte[] toBytesWithDecrementedTtlAndPayload(byte[] newPayload) {
+        ByteBuffer bb = ByteBuffer.allocate(HEADER_SIZE + newPayload.length);
+        bb.put((byte) tag);
+        bb.put(padId(originId));
+        bb.put(padId(targetId));
+        bb.putLong(sequence);
+        bb.put((byte) Math.max(0, ttl - 1)); // decremented TTL
+        bb.put(transport);
+        bb.put(newPayload);
+        return bb.array();
+    }
+
     public byte[] toBytes() {
         ByteBuffer bb = ByteBuffer.allocate(HEADER_SIZE + payload.length);
         bb.put((byte) tag);

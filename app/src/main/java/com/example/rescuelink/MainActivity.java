@@ -355,27 +355,48 @@ public class MainActivity extends AppCompatActivity {
         broker.relay(packet, sourceId, isForMe);
     }
 
+    // Replace the existing handleControlPacket method:
     private void handleControlPacket(String originId, byte[] payload) {
         String control = new String(payload, StandardCharsets.UTF_8);
-        Log.d("CONTROL", "Received: " + control + " from " + originId);
 
         if (control.startsWith("PTT_START:")) {
-            String talkerId = control.substring(10); // extract mesh ID after "PTT_START:"
+            String talkerId = control.substring(10);
             if (!myMeshId.equals(talkerId)) {
-                // Someone else started talking — claim channel on their behalf
-                claimChannel(talkerId);
-                log("🎙 " + talkerId + " is transmitting...");
+                channelOwner = talkerId; // direct assignment — no handler needed
+                // Minimal UI update — just disable button and update text
+                runOnUiThread(() -> {
+                    if (audioManager != null && audioManager.canTransmitAudio()) {
+                        btnPtt.setEnabled(false);
+                        btnPtt.setAlpha(0.4f);
+                        btnPtt.setText(talkerId + " talking...");
+                    }
+                    if (channelStatusText != null) {
+                        channelStatusText.setText("Channel: " + talkerId + " is talking");
+                    }
+                });
+                log("🎙 " + talkerId + " is transmitting");
             }
+
         } else if (control.startsWith("PTT_END:")) {
-            String talkerId = control.substring(8); // extract mesh ID after "PTT_END:"
+            String talkerId = control.substring(8);
             if (talkerId.equals(channelOwner)) {
-                // The person who was talking released the channel
-                releaseChannel();
+                channelOwner = null;
+                channelTimeoutHandler.removeCallbacks(channelTimeoutRunnable);
+                // Minimal UI update — just re-enable button
+                runOnUiThread(() -> {
+                    if (audioManager != null && audioManager.canTransmitAudio()) {
+                        btnPtt.setEnabled(true);
+                        btnPtt.setAlpha(1.0f);
+                        btnPtt.setText(R.string.ptt_idle);
+                    }
+                    if (channelStatusText != null) {
+                        channelStatusText.setText("Channel: Free");
+                    }
+                });
                 log("✓ Channel free");
             }
         }
     }
-
     private void handleStatusUpdate(String originId, byte[] body) {
         try {
             int peerScore = Integer.parseInt(
