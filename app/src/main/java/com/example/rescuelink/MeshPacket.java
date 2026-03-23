@@ -10,7 +10,8 @@ public class MeshPacket {
     public static final byte TRANSPORT_BOTH    = 0x03;
     public static final String BROADCAST_ID    = "FFFF";
 
-    private static long sequenceCounter = 0;
+    private static final java.util.concurrent.atomic.AtomicLong sequenceCounter
+            = new java.util.concurrent.atomic.AtomicLong(0);
 
     public final char tag;
     public final String originId;
@@ -34,7 +35,7 @@ public class MeshPacket {
         this.tag = tag;
         this.originId = originId;
         this.targetId = targetId;
-        this.sequence = ++sequenceCounter;
+        this.sequence = sequenceCounter.incrementAndGet();
         this.ttl = 6;
         this.transport = TRANSPORT_BOTH;
         this.payload = payload;

@@ -18,13 +18,17 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -42,15 +46,27 @@ public class MainActivity extends AppCompatActivity {
     private TransportBroker broker;
     private OpusAudioManager audioManager;
     private BleBeaconManager bleBeacon;
-    // private DtnQueue dtnQueue; // Uncomment when you add SQLite DTN layer
 
     public boolean isAppInBackground = false;
     private final Map<String, Integer> deviceScores = new ConcurrentHashMap<>();
 
+    // --- Half-Duplex Channel Control ---
+    // null means channel is free
+    // non-null means this meshId currently owns the channel
+    private String channelOwner = null;
+    private static final int CHANNEL_TIMEOUT_MS = 10000; // auto-release after 10s
+    private final Handler channelTimeoutHandler = new Handler(Looper.getMainLooper());
+    private final Runnable channelTimeoutRunnable = () -> {
+        // Safety net — if PTT_END never arrives, release channel after 10s
+        if (channelOwner != null) {
+            log("CHANNEL: Auto-released after timeout (owner: " + channelOwner + ")");
+            releaseChannel();
+        }
+    };
+
     // --- UI Elements ---
-    private TextView statusText, myIdText, debugLog;
+    private TextView statusText, myIdText, debugLog, channelStatusText;
     private ScrollView logScrollView;
-    // btnSos kept but only initialized after infrastructure is ready
     private Button btnPtt, btnSend, btnDisconnect, btnSos;
     private EditText inputMessage;
     private SharedPreferences prefs;
@@ -64,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Temporary crash reader — remove after stable
         SharedPreferences p = getSharedPreferences("RescuePrefs", MODE_PRIVATE);
         String lastCrash = p.getString("last_crash", null);
         if (lastCrash != null) {
@@ -99,6 +116,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        channelTimeoutHandler.removeCallbacks(channelTimeoutRunnable);
         if (nearbyManager != null) nearbyManager.disconnectAll();
         if (hotspotManager != null) hotspotManager.stop();
         if (audioManager != null) audioManager.release();
@@ -109,41 +127,36 @@ public class MainActivity extends AppCompatActivity {
     // ==========================================
 
     private void initUI() {
-        statusText   = findViewById(R.id.statusText);
-        myIdText     = findViewById(R.id.myIdText);
-        debugLog     = findViewById(R.id.debugLog);
-        logScrollView = (ScrollView) debugLog.getParent();
-        btnPtt       = findViewById(R.id.btnPtt);
-        btnSend      = findViewById(R.id.btnSend);
-        btnDisconnect = findViewById(R.id.btnDisconnect);
-        btnSos       = findViewById(R.id.btnSos);
-        inputMessage  = findViewById(R.id.inputMessage); // ← add this line
+        statusText        = findViewById(R.id.statusText);
+        myIdText          = findViewById(R.id.myIdText);
+        debugLog          = findViewById(R.id.debugLog);
+        logScrollView     = (ScrollView) debugLog.getParent();
+        btnPtt            = findViewById(R.id.btnPtt);
+        btnSend           = findViewById(R.id.btnSend);
+        btnDisconnect     = findViewById(R.id.btnDisconnect);
+        btnSos            = findViewById(R.id.btnSos);
+        inputMessage      = findViewById(R.id.inputMessage);
+        channelStatusText = findViewById(R.id.channelStatusText);
 
         myIdText.setText(String.format("%s [%s]", USER_NICKNAME, myMeshId));
         debugLog.setMovementMethod(new ScrollingMovementMethod());
 
-        // Hide SOS and PTT until infrastructure is ready
-        // Prevents clicks before broker is initialized
-        btnSos.setVisibility(View.GONE);
         btnPtt.setVisibility(View.GONE);
+        btnSos.setVisibility(View.GONE);
     }
 
     // ==========================================
-    //      WIRING THE DUAL-LAYER MESH
+    //      MESH INFRASTRUCTURE
     // ==========================================
 
     private void initMeshInfrastructure() {
         log("SYSTEM: Booting Hybrid Mesh Architecture...");
 
-        // 1. Build shared deduplication — single instance covers both networks
-        deduplicator = new PacketDeduplicator();
+        deduplicator  = new PacketDeduplicator();
+        nearbyManager = new NearbyMeshManager(this);
+        hotspotManager = new HotspotMeshManager(this, null);
+        bleBeacon     = new BleBeaconManager(this);
 
-        // 2. Build transport layers
-        nearbyManager  = new NearbyMeshManager(this);
-        hotspotManager = new HotspotMeshManager(this, null); // listener set inside broker
-        bleBeacon      = new BleBeaconManager(this);
-
-        // 3. Build the transport broker — single routing brain above both networks
         broker = new TransportBroker(
                 nearbyManager,
                 hotspotManager,
@@ -151,52 +164,66 @@ public class MainActivity extends AppCompatActivity {
                 this::handleIncomingPacket
         );
 
-        // 4. Build audio layer — sits entirely above the broker
         audioManager = new OpusAudioManager(broker, myMeshId, this);
 
-        // 5. Wire up all UI listeners now that infrastructure is ready
         setupListeners();
-
-        // 6. Ignite the network
         nearbyManager.startAutonomousNetwork();
         startOptimizationLoop();
 
-        log("SYSTEM: Mesh infrastructure ready. MeshID = " + myMeshId);
+        log("SYSTEM: Mesh ready. ID = " + myMeshId);
     }
 
     // ==========================================
-    //      USER INTERFACE & LISTENERS
+    //      LISTENERS
     // ==========================================
 
     private void setupListeners() {
 
         // ── PTT Button ────────────────────────────────────────────────────
-        // Only shown on API 29+ devices that can encode Opus
-        // API 24–28 devices are repeater-only — PTT stays hidden
         if (audioManager.canTransmitAudio()) {
             btnPtt.setVisibility(View.VISIBLE);
+            btnPtt.setAccessibilityDelegate(new View.AccessibilityDelegate());
             btnPtt.setOnTouchListener((v, event) -> {
-                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                int action = event.getAction();
+
+                if (action == MotionEvent.ACTION_DOWN) {
+                    // Only start if channel is free
+                    if (channelOwner != null) {
+                        log("CHANNEL: Busy — " + channelOwner + " is talking");
+                        v.performClick();
+                        return true;
+                    }
+                    // Claim the channel
+                    claimChannel(myMeshId);
+                    // Broadcast PTT_START to all nodes
+                    sendControlPacket("PTT_START:" + myMeshId);
+                    // Start transmitting
                     audioManager.startRecording();
                     btnPtt.setText(R.string.ptt_talking);
-                } else if (event.getAction() == MotionEvent.ACTION_UP
-                        || event.getAction() == MotionEvent.ACTION_CANCEL) {
-                    audioManager.stopRecording();
-                    btnPtt.setText(R.string.ptt_idle);
+                    v.performClick();
+
+                } else if (action == MotionEvent.ACTION_UP
+                        || action == MotionEvent.ACTION_CANCEL) {
+                    // Only release if we own the channel
+                    if (myMeshId.equals(channelOwner)) {
+                        // Broadcast PTT_END to all nodes
+                        sendControlPacket("PTT_END:" + myMeshId);
+                        // Stop transmitting
+                        audioManager.stopRecording();
+                        releaseChannel();
+                    }
+                    v.performClick();
                 }
-                v.performClick();
                 return true;
             });
         } else {
-            // Repeater-only device — hide PTT, show informational status
             btnPtt.setVisibility(View.GONE);
-            log("DEVICE: Repeater-only mode (API " + Build.VERSION.SDK_INT
-                    + "). PTT unavailable. Relaying mesh traffic only.");
+            log(getString(R.string.log_repeater_only, Build.VERSION.SDK_INT));
         }
 
         // ── Text Send Button ──────────────────────────────────────────────
-        // Works on all devices regardless of API level
         btnSend.setOnClickListener(v -> {
+            if (broker == null) { log("ERROR: Mesh not ready."); return; }
             String m = inputMessage.getText().toString().trim();
             if (!m.isEmpty()) {
                 MeshPacket textPacket = new MeshPacket(
@@ -209,26 +236,20 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // ── SOS Button ────────────────────────────────────────────────────
-        // Visible on all devices — even repeater-only devices can send SOS
         btnSos.setVisibility(View.VISIBLE);
         btnSos.setOnClickListener(v -> {
-            // Send SOS packet through mesh on both networks simultaneously
             MeshPacket sosPacket = new MeshPacket(
                     'E', myMeshId, MeshPacket.BROADCAST_ID,
                     "SOS".getBytes(StandardCharsets.UTF_8));
             broker.send(sosPacket);
-
-            // Also blast via BLE advertisement for passive detection
-            // beyond the current mesh range
             bleBeacon.startSosBeacon(0.0, 0.0, getBatteryLevel(), myMeshId);
-
-            log("🚨 SOS BROADCAST SENT on all channels");
-            statusText.setText("SOS ACTIVE — Broadcasting on all channels");
+            log("SOS BROADCAST SENT on all channels");
+            statusText.setText(R.string.status_sos_active);
         });
 
-        // ── Disconnect / Reset Button ─────────────────────────────────────
+        // ── Disconnect Button ─────────────────────────────────────────────
         btnDisconnect.setOnClickListener(v -> {
-            log("MANUAL RESET: Clearing all links and re-scanning...");
+            log("MANUAL RESET: Clearing all links...");
             nearbyManager.disconnectAll();
             hotspotManager.stop();
             nearbyManager.startAutonomousNetwork();
@@ -236,22 +257,81 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ==========================================
-    //      THE UNIFIED PACKET HANDLER
+    //      HALF-DUPLEX CHANNEL CONTROL
+    // ==========================================
+
+    private void claimChannel(String meshId) {
+        channelOwner = meshId;
+        // Start timeout — auto-release if PTT_END never arrives
+        channelTimeoutHandler.removeCallbacks(channelTimeoutRunnable);
+        channelTimeoutHandler.postDelayed(channelTimeoutRunnable, CHANNEL_TIMEOUT_MS);
+        updateChannelStatus();
+    }
+
+    private void releaseChannel() {
+        channelOwner = null;
+        channelTimeoutHandler.removeCallbacks(channelTimeoutRunnable);
+        updateChannelStatus();
+    }
+
+    private void updateChannelStatus() {
+        runOnUiThread(() -> {
+            if (channelOwner == null) {
+                // Channel free — enable PTT if this device can transmit
+                if (audioManager != null && audioManager.canTransmitAudio()) {
+                    btnPtt.setEnabled(true);
+                    btnPtt.setAlpha(1.0f);
+                    btnPtt.setText(R.string.ptt_idle);
+                }
+                if (channelStatusText != null) {
+                    channelStatusText.setText("Channel: Free");
+                    channelStatusText.setTextColor(
+                            getResources().getColor(android.R.color.holo_green_dark, null));
+                }
+            } else if (myMeshId.equals(channelOwner)) {
+                // We own the channel — PTT stays enabled, show transmitting
+                if (channelStatusText != null) {
+                    channelStatusText.setText("Channel: YOU are transmitting");
+                    channelStatusText.setTextColor(
+                            getResources().getColor(android.R.color.holo_orange_dark, null));
+                }
+            } else {
+                // Someone else owns channel — disable PTT
+                if (audioManager != null && audioManager.canTransmitAudio()) {
+                    btnPtt.setEnabled(false);
+                    btnPtt.setAlpha(0.4f); // visually greyed out
+                    btnPtt.setText(channelOwner + " talking...");
+                }
+                if (channelStatusText != null) {
+                    channelStatusText.setText("Channel: " + channelOwner + " is talking");
+                    channelStatusText.setTextColor(
+                            getResources().getColor(android.R.color.holo_red_dark, null));
+                }
+            }
+        });
+    }
+
+    private void sendControlPacket(String controlMessage) {
+        if (broker == null) return;
+        MeshPacket controlPacket = new MeshPacket(
+                'C', myMeshId, MeshPacket.BROADCAST_ID,
+                controlMessage.getBytes(StandardCharsets.UTF_8));
+        broker.send(controlPacket);
+    }
+
+    // ==========================================
+    //      PACKET HANDLER
     // ==========================================
 
     private void handleIncomingPacket(MeshPacket packet, String sourceId) {
-
-        Log.e("AUDIO_TEST", "Packet received tag: " + packet.tag
-                + " from: " + packet.originId); // ← add this
-        // Teach the routing table how to reach this origin next time
         nearbyManager.updateRoutingTable(packet.originId, sourceId);
-
         boolean isForMe = packet.isBroadcast() || packet.targetId.equals(myMeshId);
 
         if (isForMe) {
             switch (packet.tag) {
                 case 'A':
-                    // Audio — decoded and played on all devices (decoder works API 21+)
+                    Log.e("AUDIO_TEST", "Calling playIncomingAudio, size: "
+                            + packet.payload.length);
                     audioManager.playIncomingAudio(packet.payload);
                     break;
                 case 'M':
@@ -262,15 +342,38 @@ public class MainActivity extends AppCompatActivity {
                     handleStatusUpdate(packet.originId, packet.payload);
                     break;
                 case 'E':
-                    log("🚨 SOS RECEIVED from " + packet.originId + "!");
+                    log("SOS RECEIVED from " + packet.originId);
                     runOnUiThread(() -> statusText.setText(
-                            "🚨 SOS FROM " + packet.originId));
+                            getString(R.string.status_sos_received, packet.originId)));
+                    break;
+                case 'C':
+                    handleControlPacket(packet.originId, packet.payload);
                     break;
             }
         }
 
-        // Broker decides how/whether to relay this packet to other nodes
         broker.relay(packet, sourceId, isForMe);
+    }
+
+    private void handleControlPacket(String originId, byte[] payload) {
+        String control = new String(payload, StandardCharsets.UTF_8);
+        Log.d("CONTROL", "Received: " + control + " from " + originId);
+
+        if (control.startsWith("PTT_START:")) {
+            String talkerId = control.substring(10); // extract mesh ID after "PTT_START:"
+            if (!myMeshId.equals(talkerId)) {
+                // Someone else started talking — claim channel on their behalf
+                claimChannel(talkerId);
+                log("🎙 " + talkerId + " is transmitting...");
+            }
+        } else if (control.startsWith("PTT_END:")) {
+            String talkerId = control.substring(8); // extract mesh ID after "PTT_END:"
+            if (talkerId.equals(channelOwner)) {
+                // The person who was talking released the channel
+                releaseChannel();
+                log("✓ Channel free");
+            }
+        }
     }
 
     private void handleStatusUpdate(String originId, byte[] body) {
@@ -279,14 +382,12 @@ public class MainActivity extends AppCompatActivity {
                     new String(body, StandardCharsets.UTF_8));
             deviceScores.put(originId, peerScore);
 
-            // Check if we should become the Wi-Fi hotspot backbone
             int ourScore = HotspotMeshManager.calculateNodeScore(
                     this, nearbyManager.getPeerCount(), !isAppInBackground);
             hotspotManager.evaluateBackboneRole(ourScore, deviceScores);
 
-            // Re-cluster if the current Nearby host has critically low battery
             if (!nearbyManager.isHost() && peerScore < 15) {
-                log("Host battery critical. Re-clustering mesh...");
+                log("Host battery critical. Re-clustering...");
                 nearbyManager.disconnectAll();
                 nearbyManager.startAutonomousNetwork();
             }
@@ -315,8 +416,8 @@ public class MainActivity extends AppCompatActivity {
     // ==========================================
 
     private int getBatteryLevel() {
-        IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-        Intent batteryStatus = registerReceiver(null, ifilter);
+        IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = registerReceiver(null, filter);
         if (batteryStatus != null) {
             int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
             int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
@@ -346,47 +447,47 @@ public class MainActivity extends AppCompatActivity {
     // ==========================================
 
     private boolean hasPermissions() {
-        if (Build.VERSION.SDK_INT >= 33) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             return ContextCompat.checkSelfPermission(this,
                     Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                     && ContextCompat.checkSelfPermission(this,
                     Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
                     && ContextCompat.checkSelfPermission(this,
                     "android.permission.NEARBY_WIFI_DEVICES") == PackageManager.PERMISSION_GRANTED;
-            // CHANGE_NETWORK_STATE intentionally excluded —
-            // it is a normal permission granted automatically at install time,
-            // checking it at runtime always returns DENIED on API 33+
         }
         return ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
     private void requestPermissions() {
-        ActivityCompat.requestPermissions(this, new String[]{
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.RECORD_AUDIO,
-                "android.permission.NEARBY_WIFI_DEVICES",
-                Manifest.permission.BLUETOOTH_SCAN,
-                Manifest.permission.BLUETOOTH_ADVERTISE,
-                Manifest.permission.BLUETOOTH_CONNECT
-                // CHANGE_NETWORK_STATE and ACCESS_WIFI_STATE excluded —
-                // normal permissions, declared in manifest only, not requested at runtime
-        }, 123);
+        List<String> permissions = new ArrayList<>();
+        permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        permissions.add(Manifest.permission.RECORD_AUDIO);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add("android.permission.NEARBY_WIFI_DEVICES");
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            permissions.add(Manifest.permission.BLUETOOTH_SCAN);
+            permissions.add(Manifest.permission.BLUETOOTH_ADVERTISE);
+            permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
+        }
+
+        ActivityCompat.requestPermissions(this,
+                permissions.toArray(new String[0]), 123);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           String[] permissions, int[] grantResults) {
+                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 123) {
             if (hasPermissions()) {
-                // User granted permissions — now safe to initialize mesh
                 initMeshInfrastructure();
             } else {
-                // User denied one or more required permissions
-                log("ERROR: Required permissions denied. Mesh cannot start.");
-                log("Please grant Location, Microphone, and Nearby Devices permissions.");
-                statusText.setText("Permissions required — please restart and allow all");
+                log(getString(R.string.log_permissions_denied));
+                log(getString(R.string.log_permissions_instruction));
+                statusText.setText(R.string.status_permissions_denied);
             }
         }
     }

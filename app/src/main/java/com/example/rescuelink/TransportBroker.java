@@ -40,10 +40,15 @@ public class TransportBroker {
             case 'E': sendEmergency(data); break;
             case 'M': sendMessage(data); break;
             case 'S': sendStatus(data); break;
+            case 'C': sendControl(data); break;
             default:  sendMessage(data);
         }
     }
 
+    private void sendControl(byte[] data){
+        nearbyManager.sendToAll(data);
+        if (hotspotManager.isConnected()) hotspotManager.send(data);
+    }
     private void sendAudio(byte[] data) {
         boolean hotspotSent = hotspotManager.isConnected() && hotspotManager.send(data);
         if (!hotspotSent) nearbyManager.sendToAll(data);
@@ -68,7 +73,7 @@ public class TransportBroker {
         if (packet.ttl <= 0) return;
         byte[] relayData = packet.toBytesWithDecrementedTtl();
 
-        if (packet.isBroadcast() || packet.tag == 'A') {
+        if (packet.isBroadcast() || packet.tag == 'A'|| packet.tag == 'C') {
             nearbyManager.sendToAllExcept(receivedFromId, relayData);
             hotspotManager.send(relayData);
         } else if (!isForMe) {
