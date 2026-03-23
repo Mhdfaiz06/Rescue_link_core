@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -31,7 +32,6 @@
             android:text="RESET"
             android:textColor="#FFFFFF"
             android:textStyle="bold" />
-
     </LinearLayout>
 
     <TextView
@@ -52,23 +52,53 @@
         android:textStyle="bold"
         android:layout_marginBottom="5dp"/>
 
-    <ScrollView
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="#FFFFFF"
-        android:padding="10dp"
         android:layout_marginBottom="10dp">
 
-        <TextView
-            android:id="@+id/debugLog"
+        <ScrollView
+            android:id="@+id/logScrollView"
             android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#FFFFFF"
+            android:padding="10dp">
+
+            <TextView
+                android:id="@+id/debugLog"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="System started..."
+                android:textSize="12sp"
+                android:textColor="#000000"
+                android:fontFamily="monospace"/>
+        </ScrollView>
+
+        <FrameLayout
+            android:id="@+id/mapContainer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintHeight_percent="0.5"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:visibility="invisible"> <org.maplibre.android.maps.MapView
+            android:id="@+id/mapView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        </FrameLayout>
+
+        <Button
+            android:id="@+id/btnToggleMap"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="System started..."
-            android:textSize="12sp"
-            android:textColor="#000000"
-            android:fontFamily="monospace"/>
-    </ScrollView>
+            android:text="🗺 Map"
+            android:backgroundTint="#333333"
+            android:textColor="#FFFFFF"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_margin="16dp" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -112,6 +142,7 @@
         android:backgroundTint="#FF0000"
         android:textColor="#FFFFFF"
         android:layout_marginTop="10dp"/>
+
     <Button
         android:id="@+id/btnSos"
         android:layout_width="match_parent"

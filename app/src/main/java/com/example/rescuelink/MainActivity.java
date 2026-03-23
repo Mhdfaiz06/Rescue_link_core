@@ -1,5 +1,6 @@
 package com.example.rescuelink;
 
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -33,17 +34,27 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import org.maplibre.android.MapLibre;
 
 public class MainActivity extends AppCompatActivity {
 
     public final String USER_NICKNAME = Build.MANUFACTURER + " " + Build.MODEL;
     public String myMeshId;
 
+    // --- Mesh Location & Map Tools ---
+    private com.example.rescuelink.mesh.MeshBroker broker;
+    private com.example.rescuelink.location.RescueLinkLocationManager locationManager;
+    private com.example.rescuelink.location.LocationBroadcaster locationBroadcaster;
+    private com.example.rescuelink.location.NodeLocationStore nodeLocationStore;
+    private com.example.rescuelink.map.MapUIManager mapUIManager;
+
     // --- Core Architecture Managers ---
+
     private PacketDeduplicator deduplicator;
     private NearbyMeshManager nearbyManager;
     private HotspotMeshManager hotspotManager;
-    private TransportBroker broker;
+    private com.example.rescuelink.TransportBroker audioBroker;
+    private com.example.rescuelink.mesh.MeshBroker mapBroker;
     private OpusAudioManager audioManager;
     private BleBeaconManager bleBeacon;
 
@@ -78,6 +89,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        org.maplibre.android.MapLibre.getInstance(this);
+
+        setContentView(R.layout.activity_main);
         setContentView(R.layout.activity_main);
 
         // Temporary crash reader — remove after stable
@@ -100,10 +115,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        // NEW: Tell MapLibre the app is visible
+        if (mapUIManager != null) mapUIManager.onStart();
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
         isAppInBackground = true;
         log("MODE: Repeater (Background)");
+        if (mapUIManager != null) mapUIManager.onPause();
     }
 
     @Override
@@ -111,12 +134,26 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         isAppInBackground = false;
         log("MODE: Active Node (Foreground)");
+        if (mapUIManager != null) mapUIManager.onResume();
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // NEW: Stop map rendering
+        if (mapUIManager != null) mapUIManager.onStop();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         channelTimeoutHandler.removeCallbacks(channelTimeoutRunnable);
+
+        if (mapUIManager != null) mapUIManager.onDestroy();
+        if (locationManager != null) locationManager.stopUpdates();
+        if (locationBroadcaster != null) locationBroadcaster.stop();
+
         if (nearbyManager != null) nearbyManager.disconnectAll();
         if (hotspotManager != null) hotspotManager.stop();
         if (audioManager != null) audioManager.release();
@@ -157,18 +194,39 @@ public class MainActivity extends AppCompatActivity {
         hotspotManager = new HotspotMeshManager(this, null);
         bleBeacon     = new BleBeaconManager(this);
 
-        broker = new TransportBroker(
+        nodeLocationStore = new com.example.rescuelink.location.NodeLocationStore();
+        locationManager   = new com.example.rescuelink.location.RescueLinkLocationManager(this);
+        locationManager.startUpdates();
+
+        // 3. Connect the Brokers to the Radio (NearbyManager)
+        audioBroker = new com.example.rescuelink.TransportBroker(
                 nearbyManager,
                 hotspotManager,
                 deduplicator,
                 this::handleIncomingPacket
         );
 
-        audioManager = new OpusAudioManager(broker, myMeshId, this);
+        mapBroker = new com.example.rescuelink.mesh.MeshBroker(nearbyManager);
+
+        audioManager = new OpusAudioManager(audioBroker, myMeshId, this);
 
         setupListeners();
         nearbyManager.startAutonomousNetwork();
         startOptimizationLoop();
+
+        // Start the Foreground Service to keep everything alive
+        Intent serviceIntent = new Intent(this, MeshForegroundService.class);
+        serviceIntent.putExtra("MESH_ID", myMeshId);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
+
+        // Hook up the new Map UI
+        mapUIManager = new com.example.rescuelink.map.MapUIManager(this, nodeLocationStore, locationManager);
+        mapUIManager.init(null);
 
         log("SYSTEM: Mesh ready. ID = " + myMeshId);
     }
@@ -223,13 +281,13 @@ public class MainActivity extends AppCompatActivity {
 
         // ── Text Send Button ──────────────────────────────────────────────
         btnSend.setOnClickListener(v -> {
-            if (broker == null) { log("ERROR: Mesh not ready."); return; }
+            if (audioBroker == null) { log("ERROR: Mesh not ready."); return; }
             String m = inputMessage.getText().toString().trim();
             if (!m.isEmpty()) {
                 MeshPacket textPacket = new MeshPacket(
                         'M', myMeshId, MeshPacket.BROADCAST_ID,
                         m.getBytes(StandardCharsets.UTF_8));
-                broker.send(textPacket);
+                audioBroker.send(textPacket);
                 log("Me: " + m);
                 inputMessage.setText("");
             }
@@ -241,7 +299,7 @@ public class MainActivity extends AppCompatActivity {
             MeshPacket sosPacket = new MeshPacket(
                     'E', myMeshId, MeshPacket.BROADCAST_ID,
                     "SOS".getBytes(StandardCharsets.UTF_8));
-            broker.send(sosPacket);
+            audioBroker.send(sosPacket);
             bleBeacon.startSosBeacon(0.0, 0.0, getBatteryLevel(), myMeshId);
             log("SOS BROADCAST SENT on all channels");
             statusText.setText(R.string.status_sos_active);
@@ -312,11 +370,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void sendControlPacket(String controlMessage) {
-        if (broker == null) return;
+        if (audioBroker == null) return;
         MeshPacket controlPacket = new MeshPacket(
                 'C', myMeshId, MeshPacket.BROADCAST_ID,
                 controlMessage.getBytes(StandardCharsets.UTF_8));
-        broker.send(controlPacket);
+        audioBroker.send(controlPacket);
     }
 
     // ==========================================
@@ -352,7 +410,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        broker.relay(packet, sourceId, isForMe);
+        audioBroker.relay(packet, sourceId, isForMe);
     }
 
     // Replace the existing handleControlPacket method:
@@ -425,7 +483,7 @@ public class MainActivity extends AppCompatActivity {
                     MeshPacket statusPacket = new MeshPacket(
                             'S', myMeshId, MeshPacket.BROADCAST_ID,
                             String.valueOf(myScore).getBytes(StandardCharsets.UTF_8));
-                    broker.send(statusPacket);
+                    audioBroker.send(statusPacket);
                 }
                 new Handler(Looper.getMainLooper()).postDelayed(this, 10000);
             }
