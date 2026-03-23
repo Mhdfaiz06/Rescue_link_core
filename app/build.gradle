@@ -37,4 +37,8 @@ dependencies {
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
     implementation 'com.google.android.gms:play-services-nearby:19.0.0'
+    // MapLibre — offline map rendering
+    implementation 'org.maplibre.gl:android-sdk:10.0.2'
+// Google Play Services for Location
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
 }
