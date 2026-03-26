@@ -22,12 +22,15 @@ import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class OpusAudioManager {
 
-    // 48000Hz matches Opus internal sample rate — decoder always outputs 48000Hz
     private static final int SAMPLE_RATE = 48000;
-    private static final int BITRATE     = 12000;
+
+    // --- UPGRADE 1: Half Bitrate for maximum range ---
+    private static final int BITRATE = 6000;
 
     private final WeakReference<Context> contextRef;
     private final TransportBroker broker;
@@ -47,9 +50,11 @@ public class OpusAudioManager {
 
     private long encoderPresentationTimeUs = 0;
 
-    // ==========================================
-    //   CONFIG RESENDER (Fixes "Decoder Not Ready")
-    // ==========================================
+    // --- UPGRADE 2: The Jitter Buffer ---
+    private final LinkedBlockingQueue<byte[]> jitterBuffer = new LinkedBlockingQueue<>(200);
+    private volatile boolean jitterPlayerRunning = false;
+
+    // --- Continuous Config Resender (From our previous fix) ---
     private volatile byte[] lastConfigFrame = null;
     private final Handler configResendHandler = new Handler(Looper.getMainLooper());
     private final Runnable configResendRunnable = new Runnable() {
@@ -57,16 +62,10 @@ public class OpusAudioManager {
         public void run() {
             if (isRecording && lastConfigFrame != null) {
                 byte[] configPacket = new byte[1 + lastConfigFrame.length];
-                configPacket[0] = 0x01; // 0x01 denotes a config frame
+                configPacket[0] = 0x01;
                 System.arraycopy(lastConfigFrame, 0, configPacket, 1, lastConfigFrame.length);
-
-                MeshPacket packet = new MeshPacket(
-                        'A', myMeshId, MeshPacket.BROADCAST_ID, configPacket);
-
+                MeshPacket packet = new MeshPacket('A', myMeshId, MeshPacket.BROADCAST_ID, configPacket);
                 if (broker != null) broker.send(packet);
-                Log.d("AUDIO_TRACE", "Config frame periodically re-sent");
-
-                // Keep resending every 2 seconds while PTT is held down
                 configResendHandler.postDelayed(this, 2000);
             }
         }
@@ -92,19 +91,25 @@ public class OpusAudioManager {
         format.setInteger(MediaFormat.KEY_BIT_RATE, BITRATE);
         format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 8192);
 
+        // --- UPGRADE 3: FEC (Forward Error Correction) for range loss ---
+        format.setInteger("bitrate-mode", 0); // VBR
+        format.setInteger("complexity", 5);   // Lower CPU usage
+
         encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_OPUS);
         encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
         encoder.start();
 
         encoderExecutor = Executors.newFixedThreadPool(2);
         encoderPresentationTimeUs = 0;
+        Log.e("AUDIO_TEST", "Encoder started at " + BITRATE + "bps with FEC");
     }
 
-    // ─── Decoder Setup ───────────────────────────────────────────────────
+    // ─── Decoder & Jitter Buffer Setup ───────────────────────────────────
 
     private void setupDecoder() {
         Log.e("AUDIO_TEST", "setupDecoder() called on API " + Build.VERSION.SDK_INT);
         try {
+            jitterBuffer.clear(); // Clear stale frames
             MediaFormat format = MediaFormat.createAudioFormat(
                     MediaFormat.MIMETYPE_AUDIO_OPUS, SAMPLE_RATE, 1);
             format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 8192);
@@ -114,10 +119,10 @@ public class OpusAudioManager {
             decoder.start();
 
             decoderExecutor = Executors.newFixedThreadPool(2);
-            isDecoderReady = true;
-            Log.e("AUDIO_TEST", "Decoder initialized successfully");
+            isDecoderReady  = true;
+            Log.e("AUDIO_TEST", "Decoder initialized — starting jitter player");
 
-            startDecoderOutputLoop();
+            startJitterPlayer(); // Start the shock absorber
 
         } catch (IOException e) {
             isDecoderReady = false;
@@ -125,57 +130,93 @@ public class OpusAudioManager {
         }
     }
 
-    // ─── Decoder Output Loop ─────────────────────────────────────────────
-
-    private void startDecoderOutputLoop() {
+    private void startJitterPlayer() {
+        jitterPlayerRunning = true;
         decoderExecutor.execute(() -> {
-            Log.d("AUDIO_TRACE", "Decoder output loop started");
-            while (isDecoderReady) {
-                if (decoder == null) break;
-                try {
-                    MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-                    int outputIndex = decoder.dequeueOutputBuffer(info, 100000);
+            Log.e("AUDIO_TEST", "Jitter player started");
 
-                    if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                        MediaFormat actualFormat = decoder.getOutputFormat();
-                        int actualSampleRate = actualFormat.containsKey(MediaFormat.KEY_SAMPLE_RATE)
-                                ? actualFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
-                                : SAMPLE_RATE;
-                        int actualChannels = actualFormat.containsKey(MediaFormat.KEY_CHANNEL_COUNT)
-                                ? actualFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
-                                : 1;
-                        Log.e("AUDIO_TEST", "Decoder actual output: "
-                                + actualSampleRate + "Hz " + actualChannels + "ch");
-                        recreateAudioTrack(actualSampleRate, actualChannels);
+            // Wait until we have 40 frames buffered (~800ms) before playing to absorb gaps
+            while (jitterPlayerRunning && jitterBuffer.size() < 40) {
+                try { Thread.sleep(10); } catch (InterruptedException ignored) {}
+            }
+            Log.e("AUDIO_TEST", "Jitter buffer filled — starting playback");
+
+            while (jitterPlayerRunning) {
+                try {
+                    // Wait up to 200ms for next frame
+                    byte[] opusFrame = jitterBuffer.poll(200, TimeUnit.MILLISECONDS);
+
+                    if (opusFrame == null) {
+                        // Buffer ran dry — inject silence, then wait to refill to 20 frames
+                        injectSilence();
+                        while (jitterPlayerRunning && jitterBuffer.size() < 20) {
+                            Thread.sleep(10);
+                        }
                         continue;
                     }
-
-                    if (outputIndex == MediaCodec.INFO_TRY_AGAIN_LATER) continue;
-
-                    if (outputIndex >= 0) {
-                        ByteBuffer buf = decoder.getOutputBuffer(outputIndex);
-                        if (buf != null && info.size > 0) {
-                            byte[] pcm = new byte[info.size];
-                            buf.position(info.offset);
-                            buf.limit(info.offset + info.size);
-                            buf.get(pcm);
-                            AudioTrack track = audioTrack;
-                            if (track != null) {
-                                track.write(pcm, 0, pcm.length);
-                            }
-                        }
-                        decoder.releaseOutputBuffer(outputIndex, false);
-                    }
-
-                } catch (IllegalStateException e) {
-                    isDecoderReady = false;
-                    Log.w("OpusAudio", "Decoder output loop stopped: " + e.getMessage());
-                    break;
+                    decodeAndPlay(opusFrame);
+                } catch (InterruptedException ignored) {
                 } catch (Exception e) {
-                    Log.e("OpusAudio", "Decoder output error: " + e.getMessage());
+                    Log.e("OpusAudio", "Jitter player error: " + e.getMessage());
                 }
             }
+            Log.e("AUDIO_TEST", "Jitter player stopped");
         });
+    }
+
+    private void decodeAndPlay(byte[] opusData) {
+        if (!isDecoderReady || decoder == null) return;
+        try {
+            int inputIndex = decoder.dequeueInputBuffer(5000);
+            if (inputIndex < 0) return;
+
+            ByteBuffer buf = decoder.getInputBuffer(inputIndex);
+            if (buf == null) return;
+
+            buf.clear();
+            if (opusData.length > buf.capacity()) {
+                decoder.queueInputBuffer(inputIndex, 0, 0, 0, 0);
+                return;
+            }
+            buf.put(opusData);
+            decoder.queueInputBuffer(inputIndex, 0, opusData.length, System.nanoTime() / 1000, 0);
+
+            MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+            int outputIndex = decoder.dequeueOutputBuffer(info, 5000);
+
+            if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                MediaFormat fmt = decoder.getOutputFormat();
+                int rate = fmt.containsKey(MediaFormat.KEY_SAMPLE_RATE) ? fmt.getInteger(MediaFormat.KEY_SAMPLE_RATE) : SAMPLE_RATE;
+                int ch   = fmt.containsKey(MediaFormat.KEY_CHANNEL_COUNT) ? fmt.getInteger(MediaFormat.KEY_CHANNEL_COUNT) : 1;
+                recreateAudioTrack(rate, ch);
+                return;
+            }
+            if (outputIndex >= 0) {
+                ByteBuffer out = decoder.getOutputBuffer(outputIndex);
+                if (out != null && info.size > 0) {
+                    byte[] pcm = new byte[info.size];
+                    out.position(info.offset);
+                    out.limit(info.offset + info.size);
+                    out.get(pcm);
+                    AudioTrack track = audioTrack;
+                    if (track != null) {
+                        track.write(pcm, 0, pcm.length);
+                    }
+                }
+                decoder.releaseOutputBuffer(outputIndex, false);
+            }
+        } catch (IllegalStateException e) {
+            isDecoderReady = false;
+            Log.w("OpusAudio", "Decoder error in decodeAndPlay");
+        }
+    }
+
+    private void injectSilence() {
+        AudioTrack track = audioTrack;
+        if (track != null) {
+            byte[] silence = new byte[1920]; // ~20ms of silence
+            track.write(silence, 0, silence.length);
+        }
     }
 
     private void recreateAudioTrack(int sampleRate, int channels) {
@@ -186,12 +227,8 @@ public class OpusAudioManager {
             old.release();
         }
 
-        int channelConfig = channels == 2
-                ? AudioFormat.CHANNEL_OUT_STEREO
-                : AudioFormat.CHANNEL_OUT_MONO;
-
-        int bufSize = AudioTrack.getMinBufferSize(
-                sampleRate, channelConfig, AudioFormat.ENCODING_PCM_16BIT);
+        int channelConfig = channels == 2 ? AudioFormat.CHANNEL_OUT_STEREO : AudioFormat.CHANNEL_OUT_MONO;
+        int bufSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, AudioFormat.ENCODING_PCM_16BIT);
 
         AudioTrack track = new AudioTrack(
                 AudioManager.STREAM_MUSIC,
@@ -204,24 +241,19 @@ public class OpusAudioManager {
     // ─── Recording ───────────────────────────────────────────────────────
 
     public void startRecording() {
-        Log.e("AUDIO_TEST", "startRecording() called");
         if (!canEncode) return;
-
         Context ctx = contextRef.get();
         if (ctx == null) return;
         if (ActivityCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) return;
 
         try { setupEncoder(); } catch (IOException e) { return; }
 
-        int bufSize = AudioRecord.getMinBufferSize(SAMPLE_RATE,
-                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-
-        audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
-                SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufSize);
+        int bufSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufSize);
         audioRecord.startRecording();
 
         isRecording = true;
-        lastConfigFrame = null; // Reset config for the new transmission
+        lastConfigFrame = null;
 
         // Input Thread
         encoderExecutor.execute(() -> {
@@ -252,9 +284,7 @@ public class OpusAudioManager {
             MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
             while (isRecording) {
                 int outputIndex = encoder.dequeueOutputBuffer(info, 10000);
-
-                if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) continue;
-                if (outputIndex == MediaCodec.INFO_TRY_AGAIN_LATER) continue;
+                if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED || outputIndex == MediaCodec.INFO_TRY_AGAIN_LATER) continue;
 
                 if (outputIndex >= 0) {
                     ByteBuffer buf = encoder.getOutputBuffer(outputIndex);
@@ -266,9 +296,6 @@ public class OpusAudioManager {
 
                         boolean isConfig = (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0;
 
-                        // ==========================================
-                        //   START THE RESEND LOOP IF WE FIND A CONFIG
-                        // ==========================================
                         if (isConfig) {
                             lastConfigFrame = compressed.clone();
                             configResendHandler.removeCallbacks(configResendRunnable);
@@ -279,8 +306,7 @@ public class OpusAudioManager {
                         packetData[0] = isConfig ? (byte) 0x01 : (byte) 0x00;
                         System.arraycopy(compressed, 0, packetData, 1, compressed.length);
 
-                        MeshPacket packet = new MeshPacket(
-                                'A', myMeshId, MeshPacket.BROADCAST_ID, packetData);
+                        MeshPacket packet = new MeshPacket('A', myMeshId, MeshPacket.BROADCAST_ID, packetData);
                         if (broker != null) broker.send(packet);
                     }
                     encoder.releaseOutputBuffer(outputIndex, false);
@@ -290,19 +316,12 @@ public class OpusAudioManager {
         });
     }
 
-    // ─── Playback ────────────────────────────────────────────────────────
+    // ─── Playback (Receiving) ────────────────────────────────────────────
 
     public void playIncomingAudio(byte[] rawData) {
-        // ==========================================
-        //   DECODER AUTO-RECOVERY
-        // ==========================================
         if (!isDecoderReady || decoder == null || decoderExecutor == null || decoderExecutor.isShutdown()) {
-            Log.w("AUDIO_TRACE", "Dropping frame — decoder not ready, attempting recovery...");
             if (decoder == null || decoderExecutor == null || decoderExecutor.isShutdown()) {
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    Log.e("AUDIO_TEST", "Decoder dead — reinitializing");
-                    setupDecoder();
-                });
+                new Handler(Looper.getMainLooper()).post(this::setupDecoder); // Auto-recovery
             }
             return;
         }
@@ -313,45 +332,37 @@ public class OpusAudioManager {
         final byte[] opusData = new byte[rawData.length - 1];
         System.arraycopy(rawData, 1, opusData, 0, opusData.length);
 
-        decoderExecutor.execute(() -> {
-            if (!isDecoderReady || decoder == null) return;
-            try {
-                int inputIndex = decoder.dequeueInputBuffer(10000);
-                if (inputIndex < 0) return;
-
-                ByteBuffer buf = decoder.getInputBuffer(inputIndex);
-                if (buf == null) return;
-
-                buf.clear();
-                if (opusData.length > buf.capacity()) {
-                    decoder.queueInputBuffer(inputIndex, 0, 0, 0, 0);
-                    return;
+        if (marker == 0x01) {
+            // Config frame — feed directly to decoder, bypassing the jitter buffer
+            decoderExecutor.execute(() -> {
+                if (!isDecoderReady || decoder == null) return;
+                try {
+                    int inputIndex = decoder.dequeueInputBuffer(10000);
+                    if (inputIndex >= 0) {
+                        ByteBuffer buf = decoder.getInputBuffer(inputIndex);
+                        if (buf != null) {
+                            buf.clear();
+                            buf.put(opusData);
+                            decoder.queueInputBuffer(inputIndex, 0, opusData.length, 0, MediaCodec.BUFFER_FLAG_CODEC_CONFIG);
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.w("OpusAudio", "Config frame error: " + e.getMessage());
                 }
-                buf.put(opusData);
-
-                if (marker == 0x01) {
-                    decoder.queueInputBuffer(inputIndex, 0, opusData.length,
-                            0, MediaCodec.BUFFER_FLAG_CODEC_CONFIG);
-                } else {
-                    decoder.queueInputBuffer(inputIndex, 0, opusData.length,
-                            System.nanoTime() / 1000, 0);
-                }
-
-            } catch (IllegalStateException e) {
-                isDecoderReady = false;
-                Log.w("OpusAudio", "Decoder input error: " + e.getMessage());
-            } catch (Exception e) {
-                Log.e("OpusAudio", "Decoder input error: " + e.getMessage());
+            });
+        } else {
+            // Audio frame — add to jitter buffer
+            if (jitterBuffer.remainingCapacity() == 0) {
+                jitterBuffer.poll(); // Drop oldest frame if full
             }
-        });
+            jitterBuffer.offer(opusData);
+        }
     }
 
     // ─── Lifecycle ───────────────────────────────────────────────────────
 
     public void stopRecording() {
         isRecording = false;
-
-        // Stop the config resend loop immediately when PTT is released
         configResendHandler.removeCallbacks(configResendRunnable);
         lastConfigFrame = null;
 
@@ -373,7 +384,10 @@ public class OpusAudioManager {
 
     public void release() {
         stopRecording();
+        jitterPlayerRunning = false;
         isDecoderReady = false;
+        jitterBuffer.clear();
+
         if (decoderExecutor != null) {
             decoderExecutor.shutdown();
             decoderExecutor = null;
