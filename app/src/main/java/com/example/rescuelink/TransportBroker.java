@@ -19,6 +19,16 @@ public class TransportBroker {
     private final IncomingPacketHandler incomingHandler;
     private final EncryptionManager encryption;
 
+    // ==========================================
+    //      THE TRAFFIC COP (Bandwidth Gating)
+    // ==========================================
+    private volatile boolean isAudioActive = false;
+
+    public void setAudioActive(boolean active) {
+        this.isAudioActive = active;
+        Log.d(TAG, "Traffic Cop: Audio active state = " + active);
+    }
+
     public TransportBroker(
             NearbyMeshManager nearby,
             HotspotMeshManager hotspot,
@@ -71,6 +81,11 @@ public class TransportBroker {
     // ─── Outgoing ────────────────────────────────────────────────────────
 
     public void send(MeshPacket packet) {
+        // Pre-gate check: If audio is active, don't even bother encrypting GPS/Status packets. Save CPU!
+        if (isAudioActive && (packet.tag == 'S' || packet.tag == 'L')) {
+            return;
+        }
+
         byte[] encryptedPayload;
         try {
             if (packet.tag == 'A') {
@@ -184,6 +199,8 @@ public class TransportBroker {
     }
 
     private void sendStatus(byte[] data) {
+        // Double check just in case it bypasses the earlier gate
+        if (isAudioActive) return;
         nearbyManager.sendToAll(data);
         if (hotspotManager.isConnected()) hotspotManager.send(data);
     }
@@ -194,6 +211,8 @@ public class TransportBroker {
     }
 
     private void sendLocation(byte[] data) {
+        // Double check just in case it bypasses the earlier gate
+        if (isAudioActive) return;
         nearbyManager.sendToAll(data);
         if (hotspotManager.isConnected()) hotspotManager.send(data);
     }

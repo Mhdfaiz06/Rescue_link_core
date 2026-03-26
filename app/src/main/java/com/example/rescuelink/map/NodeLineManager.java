@@ -44,12 +44,13 @@ public class NodeLineManager {
             // Distance label layer — small text at midpoint of each line
             SymbolLayer labelLayer = new SymbolLayer(LABEL_LAYER_ID, SOURCE_ID);
             labelLayer.setProperties(
-                    PropertyFactory.textField("{distance}"),
-                    PropertyFactory.textSize(13f),
+                    PropertyFactory.textField(org.maplibre.android.style.expressions.Expression.get("distance")),
+                    //PropertyFactory.textField("{distance}"),
+                    PropertyFactory.textSize(14f),
                     PropertyFactory.textColor("#FFFFFF"),
                     PropertyFactory.textHaloColor("#000000"),
                     PropertyFactory.textHaloWidth(1.5f),
-                    PropertyFactory.textOffset(new Float[]{0f, -0.5f})
+                    PropertyFactory.textOffset(new Float[]{0f, -0.7f})
             );
             style.addLayer(labelLayer);
         });

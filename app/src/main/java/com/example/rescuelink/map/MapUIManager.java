@@ -117,50 +117,62 @@ public class MapUIManager {
     }
 
     private void refreshMap() {
-        if (locationManager == null || !locationManager.hasValidLocation()) return;
+        try {
+            if (locationManager == null || !locationManager.hasValidLocation()) return;
 
-        double myLat = locationManager.getLatitude();
-        double myLon = locationManager.getLongitude();
-        LatLng myPos = new LatLng(myLat, myLon);
+            double myLat = locationManager.getLatitude();
+            double myLon = locationManager.getLongitude();
 
-        // 1. Draw ourselves (Blue dot)
-        Circle myCircle = nodeCircles.get("__me__");
-        if (myCircle != null) {
-            myCircle.setLatLng(myPos);
-            circleManager.update(myCircle);
-        } else {
-            CircleOptions options = new CircleOptions()
-                    .withLatLng(myPos).withCircleRadius(10f)
-                    .withCircleColor(MapStyleHelper.OWN_NODE_COLOR)
-                    .withCircleStrokeWidth(2f).withCircleStrokeColor("#FFFFFF");
-            nodeCircles.put("__me__", circleManager.create(options));
-            mapLibreMap.setCameraPosition(new CameraPosition.Builder().target(myPos).zoom(15).build());
-        }
+            // 1. SAFETY CHECK: Ignore "Null Island" (0.0, 0.0) which causes math crashes
+            if (myLat == 0.0 && myLon == 0.0) return;
 
-        // 2. Update other nodes' dots
-        if (nodeStore == null) return;
-        for (NodeLocationStore.NodeInfo node : nodeStore.getAllNodes()) {
-            if (node.latitude == 0 && node.longitude == 0) continue;
-            LatLng theirPos = new LatLng(node.latitude, node.longitude);
+            LatLng myPos = new LatLng(myLat, myLon);
 
-            Circle existingNode = nodeCircles.get(node.meshId);
-            if (existingNode != null) {
-                existingNode.setLatLng(theirPos);
-                existingNode.setCircleColor(MapStyleHelper.getNodeColor(node));
-                existingNode.setCircleRadius(node.isSosActive ? 16f : 10f);
-                circleManager.update(existingNode);
+            // 2. Draw ourselves (Blue dot)
+            Circle myCircle = nodeCircles.get("__me__");
+            if (myCircle != null) {
+                myCircle.setLatLng(myPos);
+                circleManager.update(myCircle);
             } else {
                 CircleOptions options = new CircleOptions()
-                        .withLatLng(theirPos).withCircleRadius(node.isSosActive ? 16f : 10f)
-                        .withCircleColor(MapStyleHelper.getNodeColor(node))
-                        .withCircleStrokeWidth(1.5f).withCircleStrokeColor("#FFFFFF");
-                nodeCircles.put(node.meshId, circleManager.create(options));
+                        .withLatLng(myPos).withCircleRadius(10f)
+                        .withCircleColor(MapStyleHelper.OWN_NODE_COLOR)
+                        .withCircleStrokeWidth(2f).withCircleStrokeColor("#FFFFFF");
+                nodeCircles.put("__me__", circleManager.create(options));
+                mapLibreMap.setCameraPosition(new CameraPosition.Builder().target(myPos).zoom(15).build());
             }
-        }
 
-        // 3. Update the Lines and Distances via GeoJSON
-        if (nodeLineManager != null) {
-            nodeLineManager.updateLines(myLat, myLon, nodeStore.getAllNodes());
+            // 3. Update other nodes' dots
+            if (nodeStore == null) return;
+            for (NodeLocationStore.NodeInfo node : nodeStore.getAllNodes()) {
+                // SAFETY CHECK: Skip invalid node coordinates
+                if (node.latitude == 0.0 && node.longitude == 0.0) continue;
+
+                LatLng theirPos = new LatLng(node.latitude, node.longitude);
+
+                Circle existingNode = nodeCircles.get(node.meshId);
+                if (existingNode != null) {
+                    existingNode.setLatLng(theirPos);
+                    existingNode.setCircleColor(MapStyleHelper.getNodeColor(node));
+                    existingNode.setCircleRadius(node.isSosActive ? 16f : 10f);
+                    circleManager.update(existingNode);
+                } else {
+                    CircleOptions options = new CircleOptions()
+                            .withLatLng(theirPos).withCircleRadius(node.isSosActive ? 16f : 10f)
+                            .withCircleColor(MapStyleHelper.getNodeColor(node))
+                            .withCircleStrokeWidth(1.5f).withCircleStrokeColor("#FFFFFF");
+                    nodeCircles.put(node.meshId, circleManager.create(options));
+                }
+            }
+
+            // 4. Update the Lines and Distances
+            if (nodeLineManager != null) {
+                nodeLineManager.updateLines(myLat, myLon, nodeStore.getAllNodes());
+            }
+
+        } catch (Exception e) {
+            // THE SAFETY NET: If MapLibre bugs out, the loop survives and tries again next time!
+            android.util.Log.e("MapUIManager", "Silent Map Crash Prevented: " + e.getMessage());
         }
     }
 

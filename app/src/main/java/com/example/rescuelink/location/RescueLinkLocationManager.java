@@ -25,9 +25,11 @@ public class RescueLinkLocationManager {
     }
 
     private static final String TAG = "RLLocation";
-    private static final long UPDATE_INTERVAL_MS     = 5000;
-    private static final long FASTEST_INTERVAL_MS    = 2000;
-    private static final float MIN_DISPLACEMENT_M    = 5.0f;
+    
+    // Increased frequency for better accuracy and responsiveness
+    private static final long UPDATE_INTERVAL_MS     = 2000; 
+    private static final long FASTEST_INTERVAL_MS    = 1000;
+    private static final float MIN_DISPLACEMENT_M    = 0.0f; // Update even on small movements
 
     private final Context context;
     private final FusedLocationProviderClient fusedClient;
@@ -56,10 +58,12 @@ public class RescueLinkLocationManager {
             return;
         }
 
+        // Using PRIORITY_HIGH_ACCURACY to force GPS usage
         LocationRequest request = new LocationRequest.Builder(UPDATE_INTERVAL_MS)
                 .setMinUpdateIntervalMillis(FASTEST_INTERVAL_MS)
                 .setMinUpdateDistanceMeters(MIN_DISPLACEMENT_M)
                 .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                .setWaitForAccurateLocation(true) // Wait for a better fix if needed
                 .build();
 
         locationCallback = new LocationCallback() {
@@ -68,11 +72,15 @@ public class RescueLinkLocationManager {
                 Location location = result.getLastLocation();
                 if (location == null) return;
 
+                // Filter out very inaccurate locations (e.g. > 100m) if we have a choice
+                // but for now, we'll just report what we have and let the UI show accuracy.
                 lastLatitude    = location.getLatitude();
                 lastLongitude   = location.getLongitude();
                 lastAccuracy    = location.getAccuracy();
                 lastUpdateTime  = System.currentTimeMillis();
                 hasValidLocation = true;
+
+                Log.d(TAG, "Location Update: " + lastLatitude + "," + lastLongitude + " Acc: " + lastAccuracy);
 
                 if (listener != null) {
                     listener.onLocationUpdated(lastLatitude, lastLongitude, lastAccuracy);
@@ -80,19 +88,27 @@ public class RescueLinkLocationManager {
             }
         };
 
-        fusedClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper());
-
-        fusedClient.getLastLocation().addOnSuccessListener(location -> {
-            if (location != null && !hasValidLocation) {
-                lastLatitude    = location.getLatitude();
-                lastLongitude   = location.getLongitude();
-                lastAccuracy    = location.getAccuracy();
-                hasValidLocation = true;
-                if (listener != null) {
-                    listener.onLocationUpdated(lastLatitude, lastLongitude, lastAccuracy);
+        try {
+            fusedClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper());
+            
+            // Also try to get the last known location quickly, but only if it's fresh
+            fusedClient.getLastLocation().addOnSuccessListener(location -> {
+                if (location != null && !hasValidLocation) {
+                    long age = System.currentTimeMillis() - location.getTime();
+                    if (age < 60000) { // Only use if less than 1 minute old
+                        lastLatitude    = location.getLatitude();
+                        lastLongitude   = location.getLongitude();
+                        lastAccuracy    = location.getAccuracy();
+                        hasValidLocation = true;
+                        if (listener != null) {
+                            listener.onLocationUpdated(lastLatitude, lastLongitude, lastAccuracy);
+                        }
+                    }
                 }
-            }
-        });
+            });
+        } catch (SecurityException e) {
+            Log.e(TAG, "Security exception requesting location: " + e.getMessage());
+        }
     }
 
     public void stopUpdates() {
@@ -102,7 +118,6 @@ public class RescueLinkLocationManager {
         }
     }
 
-    // ─── THE MISSING GETTERS YOU NEED ────────────────────────────────────
     public double getLatitude()       { return lastLatitude; }
     public double getLongitude()      { return lastLongitude; }
     public float  getAccuracy()       { return lastAccuracy; }

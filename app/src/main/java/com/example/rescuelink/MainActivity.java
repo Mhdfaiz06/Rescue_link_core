@@ -1,6 +1,5 @@
 package com.example.rescuelink;
 
-
 import android.Manifest;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -42,19 +41,16 @@ public class MainActivity extends AppCompatActivity {
     public String myMeshId;
 
     // --- Mesh Location & Map Tools ---
-    private com.example.rescuelink.mesh.MeshBroker broker;
     private com.example.rescuelink.location.RescueLinkLocationManager locationManager;
     private com.example.rescuelink.location.LocationBroadcaster locationBroadcaster;
     private com.example.rescuelink.location.NodeLocationStore nodeLocationStore;
     private com.example.rescuelink.map.MapUIManager mapUIManager;
 
     // --- Core Architecture Managers ---
-
     private PacketDeduplicator deduplicator;
     private NearbyMeshManager nearbyManager;
     private HotspotMeshManager hotspotManager;
-    private com.example.rescuelink.TransportBroker audioBroker;
-    private com.example.rescuelink.mesh.MeshBroker mapBroker;
+    private com.example.rescuelink.TransportBroker audioBroker; // The Unified Pipe
     private OpusAudioManager audioManager;
     private BleBeaconManager bleBeacon;
 
@@ -62,13 +58,10 @@ public class MainActivity extends AppCompatActivity {
     private final Map<String, Integer> deviceScores = new ConcurrentHashMap<>();
 
     // --- Half-Duplex Channel Control ---
-    // null means channel is free
-    // non-null means this meshId currently owns the channel
     private String channelOwner = null;
-    private static final int CHANNEL_TIMEOUT_MS = 10000; // auto-release after 10s
+    private static final int CHANNEL_TIMEOUT_MS = 10000;
     private final Handler channelTimeoutHandler = new Handler(Looper.getMainLooper());
     private final Runnable channelTimeoutRunnable = () -> {
-        // Safety net — if PTT_END never arrives, release channel after 10s
         if (channelOwner != null) {
             log("CHANNEL: Auto-released after timeout (owner: " + channelOwner + ")");
             releaseChannel();
@@ -89,13 +82,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         org.maplibre.android.MapLibre.getInstance(this);
-
-        setContentView(R.layout.activity_main);
         setContentView(R.layout.activity_main);
 
-        // Temporary crash reader — remove after stable
         SharedPreferences p = getSharedPreferences("RescuePrefs", MODE_PRIVATE);
         String lastCrash = p.getString("last_crash", null);
         if (lastCrash != null) {
@@ -117,7 +106,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        // NEW: Tell MapLibre the app is visible
         if (mapUIManager != null) mapUIManager.onStart();
     }
 
@@ -135,13 +123,11 @@ public class MainActivity extends AppCompatActivity {
         isAppInBackground = false;
         log("MODE: Active Node (Foreground)");
         if (mapUIManager != null) mapUIManager.onResume();
-
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        // NEW: Stop map rendering
         if (mapUIManager != null) mapUIManager.onStop();
     }
 
@@ -149,11 +135,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         channelTimeoutHandler.removeCallbacks(channelTimeoutRunnable);
-
         if (mapUIManager != null) mapUIManager.onDestroy();
         if (locationManager != null) locationManager.stopUpdates();
         if (locationBroadcaster != null) locationBroadcaster.stop();
-
         if (nearbyManager != null) nearbyManager.disconnectAll();
         if (hotspotManager != null) hotspotManager.stop();
         if (audioManager != null) audioManager.release();
@@ -198,15 +182,24 @@ public class MainActivity extends AppCompatActivity {
         locationManager   = new com.example.rescuelink.location.RescueLinkLocationManager(this);
         locationManager.startUpdates();
 
-        // 3. Connect the Brokers to the Radio (NearbyManager)
+        // 1. Initialize Unified Broker
         audioBroker = new com.example.rescuelink.TransportBroker(
-                nearbyManager,
-                hotspotManager,
-                deduplicator,
-                this::handleIncomingPacket
+                nearbyManager, hotspotManager, deduplicator, this::handleIncomingPacket
         );
 
-        mapBroker = new com.example.rescuelink.mesh.MeshBroker(nearbyManager);
+        // 2. Initialize Broadcaster using audioBroker
+        locationBroadcaster = new com.example.rescuelink.location.LocationBroadcaster(audioBroker, myMeshId, locationManager);
+        locationBroadcaster.setStatusProvider(new com.example.rescuelink.location.LocationBroadcaster.StatusProvider() {
+            @Override
+            public int getBatteryLevel() {
+                return MainActivity.this.getBatteryLevel();
+            }
+            @Override
+            public boolean isSosActive() {
+                return statusText.getText().toString().contains("SOS");
+            }
+        });
+        locationBroadcaster.start();
 
         audioManager = new OpusAudioManager(audioBroker, myMeshId, this);
 
@@ -214,17 +207,14 @@ public class MainActivity extends AppCompatActivity {
         nearbyManager.startAutonomousNetwork();
         startOptimizationLoop();
 
-        // Start the Foreground Service to keep everything alive
         Intent serviceIntent = new Intent(this, MeshForegroundService.class);
         serviceIntent.putExtra("MESH_ID", myMeshId);
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(serviceIntent);
         } else {
             startService(serviceIntent);
         }
 
-        // Hook up the new Map UI
         mapUIManager = new com.example.rescuelink.map.MapUIManager(this, nodeLocationStore, locationManager);
         mapUIManager.init(null);
 
@@ -236,39 +226,44 @@ public class MainActivity extends AppCompatActivity {
     // ==========================================
 
     private void setupListeners() {
-
-        // ── PTT Button ────────────────────────────────────────────────────
         if (audioManager.canTransmitAudio()) {
             btnPtt.setVisibility(View.VISIBLE);
-            btnPtt.setAccessibilityDelegate(new View.AccessibilityDelegate());
             btnPtt.setOnTouchListener((v, event) -> {
                 int action = event.getAction();
 
                 if (action == MotionEvent.ACTION_DOWN) {
-                    // Only start if channel is free
                     if (channelOwner != null) {
                         log("CHANNEL: Busy — " + channelOwner + " is talking");
                         v.performClick();
                         return true;
                     }
-                    // Claim the channel
+
                     claimChannel(myMeshId);
-                    // Broadcast PTT_START to all nodes
                     sendControlPacket("PTT_START:" + myMeshId);
-                    // Start transmitting
+
+                    // Central Gate - Tell the broker to pause GPS/Status traffic
+                    if (audioBroker != null) audioBroker.setAudioActive(true);
+
                     audioManager.startRecording();
                     btnPtt.setText(R.string.ptt_talking);
                     v.performClick();
 
-                } else if (action == MotionEvent.ACTION_UP
-                        || action == MotionEvent.ACTION_CANCEL) {
-                    // Only release if we own the channel
+                } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
                     if (myMeshId.equals(channelOwner)) {
-                        // Broadcast PTT_END to all nodes
-                        sendControlPacket("PTT_END:" + myMeshId);
-                        // Stop transmitting
+                        // 1. Stop audio first (clears the bandwidth pipe immediately)
                         audioManager.stopRecording();
+
+                        // 2. Open the gate (allow GPS/Status again)
+                        if (audioBroker != null) audioBroker.setAudioActive(false);
+
+                        // 3. Release locally
                         releaseChannel();
+
+                        // 4. Progressive resend (Fires through the newly cleared pipe)
+                        sendControlPacket("PTT_END:" + myMeshId);
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> sendControlPacket("PTT_END:" + myMeshId), 150);
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> sendControlPacket("PTT_END:" + myMeshId), 400);
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> sendControlPacket("PTT_END:" + myMeshId), 800);
                     }
                     v.performClick();
                 }
@@ -279,7 +274,6 @@ public class MainActivity extends AppCompatActivity {
             log(getString(R.string.log_repeater_only, Build.VERSION.SDK_INT));
         }
 
-        // ── Text Send Button ──────────────────────────────────────────────
         btnSend.setOnClickListener(v -> {
             if (audioBroker == null) { log("ERROR: Mesh not ready."); return; }
             String m = inputMessage.getText().toString().trim();
@@ -293,7 +287,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // ── SOS Button ────────────────────────────────────────────────────
         btnSos.setVisibility(View.VISIBLE);
         btnSos.setOnClickListener(v -> {
             MeshPacket sosPacket = new MeshPacket(
@@ -303,9 +296,9 @@ public class MainActivity extends AppCompatActivity {
             bleBeacon.startSosBeacon(0.0, 0.0, getBatteryLevel(), myMeshId);
             log("SOS BROADCAST SENT on all channels");
             statusText.setText(R.string.status_sos_active);
+            if (nodeLocationStore != null) nodeLocationStore.markSosActive(myMeshId);
         });
 
-        // ── Disconnect Button ─────────────────────────────────────────────
         btnDisconnect.setOnClickListener(v -> {
             log("MANUAL RESET: Clearing all links...");
             nearbyManager.disconnectAll();
@@ -315,12 +308,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ==========================================
-    //      HALF-DUPLEX CHANNEL CONTROL
+    //      CHANNEL CONTROL
     // ==========================================
 
     private void claimChannel(String meshId) {
         channelOwner = meshId;
-        // Start timeout — auto-release if PTT_END never arrives
         channelTimeoutHandler.removeCallbacks(channelTimeoutRunnable);
         channelTimeoutHandler.postDelayed(channelTimeoutRunnable, CHANNEL_TIMEOUT_MS);
         updateChannelStatus();
@@ -335,7 +327,6 @@ public class MainActivity extends AppCompatActivity {
     private void updateChannelStatus() {
         runOnUiThread(() -> {
             if (channelOwner == null) {
-                // Channel free — enable PTT if this device can transmit
                 if (audioManager != null && audioManager.canTransmitAudio()) {
                     btnPtt.setEnabled(true);
                     btnPtt.setAlpha(1.0f);
@@ -343,27 +334,22 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (channelStatusText != null) {
                     channelStatusText.setText("Channel: Free");
-                    channelStatusText.setTextColor(
-                            getResources().getColor(android.R.color.holo_green_dark, null));
+                    channelStatusText.setTextColor(getResources().getColor(android.R.color.holo_green_dark, null));
                 }
             } else if (myMeshId.equals(channelOwner)) {
-                // We own the channel — PTT stays enabled, show transmitting
                 if (channelStatusText != null) {
                     channelStatusText.setText("Channel: YOU are transmitting");
-                    channelStatusText.setTextColor(
-                            getResources().getColor(android.R.color.holo_orange_dark, null));
+                    channelStatusText.setTextColor(getResources().getColor(android.R.color.holo_orange_dark, null));
                 }
             } else {
-                // Someone else owns channel — disable PTT
                 if (audioManager != null && audioManager.canTransmitAudio()) {
                     btnPtt.setEnabled(false);
-                    btnPtt.setAlpha(0.4f); // visually greyed out
+                    btnPtt.setAlpha(0.4f);
                     btnPtt.setText(channelOwner + " talking...");
                 }
                 if (channelStatusText != null) {
                     channelStatusText.setText("Channel: " + channelOwner + " is talking");
-                    channelStatusText.setTextColor(
-                            getResources().getColor(android.R.color.holo_red_dark, null));
+                    channelStatusText.setTextColor(getResources().getColor(android.R.color.holo_red_dark, null));
                 }
             }
         });
@@ -378,33 +364,42 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ==========================================
-    //      PACKET HANDLER
+    //      PACKET HANDLER (CRASH-PROOF)
     // ==========================================
 
     private void handleIncomingPacket(MeshPacket packet, String sourceId) {
         try {
-            // 1. Defend against null data
             if (packet == null || sourceId == null) return;
-
             nearbyManager.updateRoutingTable(packet.originId, sourceId);
             boolean isForMe = packet.isBroadcast() || packet.targetId.equals(myMeshId);
 
             if (isForMe) {
                 switch (packet.tag) {
                     case 'A':
-                        if (audioManager != null) {
-                            audioManager.playIncomingAudio(packet.payload);
-                        }
+                        if (audioManager != null) audioManager.playIncomingAudio(packet.payload);
                         break;
                     case 'M':
                         if (packet.payload != null) {
                             String msg = new String(packet.payload, StandardCharsets.UTF_8);
                             log(packet.originId + ": " + msg);
-
-                            // Note: Uncomment this if you added updateLastMessage() to your NodeLocationStore!
-                            // if (nodeLocationStore != null) {
-                            //     nodeLocationStore.updateLastMessage(packet.originId, msg);
-                            // }
+                            if (nodeLocationStore != null) nodeLocationStore.updateLastMessage(packet.originId, msg);
+                        }
+                        break;
+                    case 'L':
+                        if (packet.payload != null) {
+                            String locData = new String(packet.payload, StandardCharsets.UTF_8);
+                            String[] parts = locData.split("\\|");
+                            if (parts.length >= 7) {
+                                double lat = Double.parseDouble(parts[2]);
+                                double lon = Double.parseDouble(parts[3]);
+                                float acc = Float.parseFloat(parts[4]);
+                                int bat = Integer.parseInt(parts[5]);
+                                boolean isSos = Boolean.parseBoolean(parts[6]);
+                                if (nodeLocationStore != null) {
+                                    nodeLocationStore.updateLocation(packet.originId, lat, lon, acc, bat, true);
+                                    if (isSos) nodeLocationStore.markSosActive(packet.originId);
+                                }
+                            }
                         }
                         break;
                     case 'S':
@@ -412,90 +407,64 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case 'E':
                         log("SOS RECEIVED from " + packet.originId);
-
-                        // Note: Uncomment this if you added markSosActive() to your NodeLocationStore!
-                        // if (nodeLocationStore != null) {
-                        //     nodeLocationStore.markSosActive(packet.originId);
-                        // }
-
-                        runOnUiThread(() -> statusText.setText(
-                                getString(R.string.status_sos_received, packet.originId)));
+                        if (nodeLocationStore != null) nodeLocationStore.markSosActive(packet.originId);
+                        runOnUiThread(() -> statusText.setText(getString(R.string.status_sos_received, packet.originId)));
                         break;
                     case 'C':
                         handleControlPacket(packet.originId, packet.payload);
                         break;
                 }
             }
-
-            // 2. CRUCIAL ARCHITECTURE PRESERVATION: Use audioBroker, NOT broker
-            if (audioBroker != null) {
-                audioBroker.relay(packet, sourceId, isForMe);
-            }
-
+            if (audioBroker != null) audioBroker.relay(packet, sourceId, isForMe);
         } catch (Exception e) {
-            // 3. The Safety Net: Never crash on a bad packet
             Log.e("MainActivity", "handleIncomingPacket error: " + e.getMessage());
         }
     }
-    // Replace the existing handleControlPacket method:
+
     private void handleControlPacket(String originId, byte[] payload) {
         String control = new String(payload, StandardCharsets.UTF_8);
-
         if (control.startsWith("PTT_START:")) {
             String talkerId = control.substring(10);
             if (!myMeshId.equals(talkerId)) {
-                channelOwner = talkerId; // direct assignment — no handler needed
-                // Minimal UI update — just disable button and update text
+                channelOwner = talkerId;
                 runOnUiThread(() -> {
                     if (audioManager != null && audioManager.canTransmitAudio()) {
                         btnPtt.setEnabled(false);
                         btnPtt.setAlpha(0.4f);
                         btnPtt.setText(talkerId + " talking...");
                     }
-                    if (channelStatusText != null) {
-                        channelStatusText.setText("Channel: " + talkerId + " is talking");
-                    }
+                    if (channelStatusText != null) channelStatusText.setText("Channel: " + talkerId + " is talking");
                 });
                 log("🎙 " + talkerId + " is transmitting");
             }
-
         } else if (control.startsWith("PTT_END:")) {
             String talkerId = control.substring(8);
             if (talkerId.equals(channelOwner)) {
                 channelOwner = null;
                 channelTimeoutHandler.removeCallbacks(channelTimeoutRunnable);
-                // Minimal UI update — just re-enable button
                 runOnUiThread(() -> {
                     if (audioManager != null && audioManager.canTransmitAudio()) {
                         btnPtt.setEnabled(true);
                         btnPtt.setAlpha(1.0f);
                         btnPtt.setText(R.string.ptt_idle);
                     }
-                    if (channelStatusText != null) {
-                        channelStatusText.setText("Channel: Free");
-                    }
+                    if (channelStatusText != null) channelStatusText.setText("Channel: Free");
                 });
                 log("✓ Channel free");
             }
         }
     }
-    private void handleStatusUpdate(String originId, byte[] body) {
-        // 1. Defend against null data
-        if (body == null || originId == null) return;
 
+    private void handleStatusUpdate(String originId, byte[] body) {
+        if (body == null || originId == null) return;
         try {
             String bodyStr = new String(body, StandardCharsets.UTF_8).trim();
             int peerScore = Integer.parseInt(bodyStr);
             deviceScores.put(originId, peerScore);
-
-            // Note: Uncomment this if you added updateStatus() to your NodeLocationStore!
-            // if (nodeLocationStore != null) {
-            //     nodeLocationStore.updateStatus(originId, peerScore);
-            // }
+            if (nodeLocationStore != null) nodeLocationStore.updateStatus(originId, peerScore);
 
             if (hotspotManager != null && nearbyManager != null) {
-                int ourScore = HotspotMeshManager.calculateNodeScore(
-                        this, nearbyManager.getPeerCount(), !isAppInBackground);
+                int ourScore = HotspotMeshManager.calculateNodeScore(this, nearbyManager.getPeerCount(), !isAppInBackground);
                 hotspotManager.evaluateBackboneRole(ourScore, deviceScores);
             }
 
@@ -504,9 +473,6 @@ public class MainActivity extends AppCompatActivity {
                 nearbyManager.disconnectAll();
                 nearbyManager.startAutonomousNetwork();
             }
-        } catch (NumberFormatException e) {
-            // Body might contain extended status in future — ignore parse failures gracefully
-            Log.d("MainActivity", "Status parse skipped for: " + originId);
         } catch (Exception e) {
             Log.w("MainActivity", "handleStatusUpdate error: " + e.getMessage());
         }
@@ -516,13 +482,10 @@ public class MainActivity extends AppCompatActivity {
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (nearbyManager.isConnected() && !isAppInBackground) {
-                    int myScore = HotspotMeshManager.calculateNodeScore(
-                            MainActivity.this, nearbyManager.getPeerCount(), true);
-                    MeshPacket statusPacket = new MeshPacket(
-                            'S', myMeshId, MeshPacket.BROADCAST_ID,
-                            String.valueOf(myScore).getBytes(StandardCharsets.UTF_8));
-                    audioBroker.send(statusPacket);
+                if (nearbyManager != null && nearbyManager.isConnected() && !isAppInBackground) {
+                    int myScore = HotspotMeshManager.calculateNodeScore(MainActivity.this, nearbyManager.getPeerCount(), true);
+                    MeshPacket statusPacket = new MeshPacket('S', myMeshId, MeshPacket.BROADCAST_ID, String.valueOf(myScore).getBytes(StandardCharsets.UTF_8));
+                    if (audioBroker != null) audioBroker.send(statusPacket);
                 }
                 new Handler(Looper.getMainLooper()).postDelayed(this, 10000);
             }
@@ -553,9 +516,7 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(() -> {
             if (debugLog != null) {
                 debugLog.append("\n[" + t + "] " + msg);
-                if (logScrollView != null) {
-                    logScrollView.post(() -> logScrollView.fullScroll(View.FOCUS_DOWN));
-                }
+                if (logScrollView != null) logScrollView.post(() -> logScrollView.fullScroll(View.FOCUS_DOWN));
             }
         });
     }
@@ -566,53 +527,38 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean hasPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            return ContextCompat.checkSelfPermission(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                    && ContextCompat.checkSelfPermission(this,
-                    Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-                    && ContextCompat.checkSelfPermission(this,
-                    "android.permission.NEARBY_WIFI_DEVICES") == PackageManager.PERMISSION_GRANTED;
+            return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                    && ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                    && ContextCompat.checkSelfPermission(this, "android.permission.NEARBY_WIFI_DEVICES") == PackageManager.PERMISSION_GRANTED;
         }
-        return ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
     private void requestPermissions() {
         List<String> permissions = new ArrayList<>();
         permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
         permissions.add(Manifest.permission.RECORD_AUDIO);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissions.add("android.permission.NEARBY_WIFI_DEVICES");
-        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) permissions.add("android.permission.NEARBY_WIFI_DEVICES");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             permissions.add(Manifest.permission.BLUETOOTH_SCAN);
             permissions.add(Manifest.permission.BLUETOOTH_ADVERTISE);
             permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
         }
-
-        ActivityCompat.requestPermissions(this,
-                permissions.toArray(new String[0]), 123);
+        ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), 123);
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 123) {
-            if (hasPermissions()) {
-                initMeshInfrastructure();
-            } else {
+            if (hasPermissions()) initMeshInfrastructure();
+            else {
                 log(getString(R.string.log_permissions_denied));
                 log(getString(R.string.log_permissions_instruction));
                 statusText.setText(R.string.status_permissions_denied);
             }
         }
     }
-
-    // ==========================================
-    //      CRASH HANDLER
-    // ==========================================
 
     private void setupCrashHandler() {
         prefs = getSharedPreferences("RescuePrefs", MODE_PRIVATE);
