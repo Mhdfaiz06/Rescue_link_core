@@ -382,37 +382,61 @@ public class MainActivity extends AppCompatActivity {
     // ==========================================
 
     private void handleIncomingPacket(MeshPacket packet, String sourceId) {
-        nearbyManager.updateRoutingTable(packet.originId, sourceId);
-        boolean isForMe = packet.isBroadcast() || packet.targetId.equals(myMeshId);
+        try {
+            // 1. Defend against null data
+            if (packet == null || sourceId == null) return;
 
-        if (isForMe) {
-            switch (packet.tag) {
-                case 'A':
-                    Log.e("AUDIO_TEST", "Calling playIncomingAudio, size: "
-                            + packet.payload.length);
-                    audioManager.playIncomingAudio(packet.payload);
-                    break;
-                case 'M':
-                    log(packet.originId + ": "
-                            + new String(packet.payload, StandardCharsets.UTF_8));
-                    break;
-                case 'S':
-                    handleStatusUpdate(packet.originId, packet.payload);
-                    break;
-                case 'E':
-                    log("SOS RECEIVED from " + packet.originId);
-                    runOnUiThread(() -> statusText.setText(
-                            getString(R.string.status_sos_received, packet.originId)));
-                    break;
-                case 'C':
-                    handleControlPacket(packet.originId, packet.payload);
-                    break;
+            nearbyManager.updateRoutingTable(packet.originId, sourceId);
+            boolean isForMe = packet.isBroadcast() || packet.targetId.equals(myMeshId);
+
+            if (isForMe) {
+                switch (packet.tag) {
+                    case 'A':
+                        if (audioManager != null) {
+                            audioManager.playIncomingAudio(packet.payload);
+                        }
+                        break;
+                    case 'M':
+                        if (packet.payload != null) {
+                            String msg = new String(packet.payload, StandardCharsets.UTF_8);
+                            log(packet.originId + ": " + msg);
+
+                            // Note: Uncomment this if you added updateLastMessage() to your NodeLocationStore!
+                            // if (nodeLocationStore != null) {
+                            //     nodeLocationStore.updateLastMessage(packet.originId, msg);
+                            // }
+                        }
+                        break;
+                    case 'S':
+                        handleStatusUpdate(packet.originId, packet.payload);
+                        break;
+                    case 'E':
+                        log("SOS RECEIVED from " + packet.originId);
+
+                        // Note: Uncomment this if you added markSosActive() to your NodeLocationStore!
+                        // if (nodeLocationStore != null) {
+                        //     nodeLocationStore.markSosActive(packet.originId);
+                        // }
+
+                        runOnUiThread(() -> statusText.setText(
+                                getString(R.string.status_sos_received, packet.originId)));
+                        break;
+                    case 'C':
+                        handleControlPacket(packet.originId, packet.payload);
+                        break;
+                }
             }
+
+            // 2. CRUCIAL ARCHITECTURE PRESERVATION: Use audioBroker, NOT broker
+            if (audioBroker != null) {
+                audioBroker.relay(packet, sourceId, isForMe);
+            }
+
+        } catch (Exception e) {
+            // 3. The Safety Net: Never crash on a bad packet
+            Log.e("MainActivity", "handleIncomingPacket error: " + e.getMessage());
         }
-
-        audioBroker.relay(packet, sourceId, isForMe);
     }
-
     // Replace the existing handleControlPacket method:
     private void handleControlPacket(String originId, byte[] payload) {
         String control = new String(payload, StandardCharsets.UTF_8);
@@ -456,21 +480,36 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void handleStatusUpdate(String originId, byte[] body) {
+        // 1. Defend against null data
+        if (body == null || originId == null) return;
+
         try {
-            int peerScore = Integer.parseInt(
-                    new String(body, StandardCharsets.UTF_8));
+            String bodyStr = new String(body, StandardCharsets.UTF_8).trim();
+            int peerScore = Integer.parseInt(bodyStr);
             deviceScores.put(originId, peerScore);
 
-            int ourScore = HotspotMeshManager.calculateNodeScore(
-                    this, nearbyManager.getPeerCount(), !isAppInBackground);
-            hotspotManager.evaluateBackboneRole(ourScore, deviceScores);
+            // Note: Uncomment this if you added updateStatus() to your NodeLocationStore!
+            // if (nodeLocationStore != null) {
+            //     nodeLocationStore.updateStatus(originId, peerScore);
+            // }
 
-            if (!nearbyManager.isHost() && peerScore < 15) {
+            if (hotspotManager != null && nearbyManager != null) {
+                int ourScore = HotspotMeshManager.calculateNodeScore(
+                        this, nearbyManager.getPeerCount(), !isAppInBackground);
+                hotspotManager.evaluateBackboneRole(ourScore, deviceScores);
+            }
+
+            if (nearbyManager != null && !nearbyManager.isHost() && peerScore < 15) {
                 log("Host battery critical. Re-clustering...");
                 nearbyManager.disconnectAll();
                 nearbyManager.startAutonomousNetwork();
             }
-        } catch (Exception ignored) {}
+        } catch (NumberFormatException e) {
+            // Body might contain extended status in future — ignore parse failures gracefully
+            Log.d("MainActivity", "Status parse skipped for: " + originId);
+        } catch (Exception e) {
+            Log.w("MainActivity", "handleStatusUpdate error: " + e.getMessage());
+        }
     }
 
     private void startOptimizationLoop() {

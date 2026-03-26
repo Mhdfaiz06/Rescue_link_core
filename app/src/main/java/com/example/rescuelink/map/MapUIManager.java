@@ -12,18 +12,11 @@ import com.example.rescuelink.R;
 import com.example.rescuelink.location.NodeLocationStore;
 import com.example.rescuelink.location.RescueLinkLocationManager;
 
-// --- FORCE MAPLIBRE IMPORTS ---
 import org.maplibre.android.MapLibre;
 import org.maplibre.android.camera.CameraPosition;
 import org.maplibre.android.geometry.LatLng;
-import org.maplibre.android.geometry.LatLngBounds;
 import org.maplibre.android.maps.MapLibreMap;
 import org.maplibre.android.maps.MapView;
-import org.maplibre.android.maps.Style;
-import org.maplibre.android.offline.OfflineManager;
-import org.maplibre.android.offline.OfflineRegion;
-import org.maplibre.android.offline.OfflineRegionDefinition;
-import org.maplibre.android.offline.OfflineTilePyramidRegionDefinition;
 import org.maplibre.android.plugins.annotation.Circle;
 import org.maplibre.android.plugins.annotation.CircleManager;
 import org.maplibre.android.plugins.annotation.CircleOptions;
@@ -41,7 +34,10 @@ public class MapUIManager {
     private View mapContainer;
     private Button btnToggleMap;
     private MapLibreMap mapLibreMap;
+
+    // --- DRAWING MANAGERS ---
     private CircleManager circleManager;
+    private NodeLineManager nodeLineManager; // <--- Claude's new manager
 
     private final Map<String, Circle> nodeCircles = new ConcurrentHashMap<>();
     private boolean isMapVisible = false;
@@ -60,7 +56,6 @@ public class MapUIManager {
         mapView = activity.findViewById(R.id.mapView);
         btnToggleMap = activity.findViewById(R.id.btnToggleMap);
 
-        // Hide map initially by pushing it down
         mapContainer.post(() -> mapContainer.setTranslationY(mapContainer.getHeight()));
         mapContainer.setVisibility(View.VISIBLE);
 
@@ -68,7 +63,11 @@ public class MapUIManager {
         mapView.getMapAsync(map -> {
             mapLibreMap = map;
             map.setStyle(OFFLINE_STYLE_URL, style -> {
+
+                // Initialize both managers
                 circleManager = new CircleManager(mapView, map, style);
+                nodeLineManager = new NodeLineManager(map); // <--- Setup the lines
+
                 isMapLoaded = true;
 
                 // Tap a dot to see battery/status
@@ -85,7 +84,7 @@ public class MapUIManager {
                 });
 
                 startDrawingLoop();
-                downloadOfflineMapRegion();
+                // downloadOfflineMapRegion(); // Uncomment if you have the offline logic ready
             });
         });
 
@@ -94,20 +93,15 @@ public class MapUIManager {
 
     private void toggleMapVisibility() {
         if (!isMapLoaded) return;
-
         float targetY = isMapVisible ? mapContainer.getHeight() : 0;
-
         mapContainer.animate()
                 .translationY(targetY)
                 .setDuration(300)
-                .withStartAction(() -> {
-                    if (!isMapVisible) btnToggleMap.setText("🔽 Close Map");
-                })
+                .withStartAction(() -> { if (!isMapVisible) btnToggleMap.setText("🔽 Close Map"); })
                 .withEndAction(() -> {
                     if (isMapVisible) btnToggleMap.setText("🗺 Map");
                     isMapVisible = !isMapVisible;
-                })
-                .start();
+                }).start();
     }
 
     private void startDrawingLoop() {
@@ -115,76 +109,59 @@ public class MapUIManager {
             @Override
             public void run() {
                 if (isMapVisible && mapLibreMap != null && circleManager != null) {
-                    refreshDots();
+                    refreshMap();
                 }
-                new Handler(Looper.getMainLooper()).postDelayed(this, 3000); // Draw every 3 seconds
+                new Handler(Looper.getMainLooper()).postDelayed(this, 3000);
             }
         }, 3000);
     }
 
-    private void refreshDots() {
-        // 1. Draw ourselves (Blue dot)
-        if (locationManager != null && locationManager.hasValidLocation()) {
-            double myLat = locationManager.getLatitude();
-            double myLon = locationManager.getLongitude();
-            LatLng myPos = new LatLng(myLat, myLon);
+    private void refreshMap() {
+        if (locationManager == null || !locationManager.hasValidLocation()) return;
 
-            Circle existing = nodeCircles.get("__me__");
-            if (existing != null) {
-                existing.setLatLng(myPos);
-                circleManager.update(existing);
-            } else {
-                CircleOptions options = new CircleOptions()
-                        .withLatLng(myPos).withCircleRadius(10f)
-                        .withCircleColor(MapStyleHelper.OWN_NODE_COLOR).withCircleStrokeWidth(2f).withCircleStrokeColor("#FFFFFF");
-                nodeCircles.put("__me__", circleManager.create(options));
-                mapLibreMap.setCameraPosition(new CameraPosition.Builder().target(myPos).zoom(15).build());
-            }
+        double myLat = locationManager.getLatitude();
+        double myLon = locationManager.getLongitude();
+        LatLng myPos = new LatLng(myLat, myLon);
+
+        // 1. Draw ourselves (Blue dot)
+        Circle myCircle = nodeCircles.get("__me__");
+        if (myCircle != null) {
+            myCircle.setLatLng(myPos);
+            circleManager.update(myCircle);
+        } else {
+            CircleOptions options = new CircleOptions()
+                    .withLatLng(myPos).withCircleRadius(10f)
+                    .withCircleColor(MapStyleHelper.OWN_NODE_COLOR)
+                    .withCircleStrokeWidth(2f).withCircleStrokeColor("#FFFFFF");
+            nodeCircles.put("__me__", circleManager.create(options));
+            mapLibreMap.setCameraPosition(new CameraPosition.Builder().target(myPos).zoom(15).build());
         }
 
-        // 2. Draw everyone else
+        // 2. Update other nodes' dots
         if (nodeStore == null) return;
         for (NodeLocationStore.NodeInfo node : nodeStore.getAllNodes()) {
             if (node.latitude == 0 && node.longitude == 0) continue;
-            LatLng pos = new LatLng(node.latitude, node.longitude);
-            Circle existing = nodeCircles.get(node.meshId);
+            LatLng theirPos = new LatLng(node.latitude, node.longitude);
 
-            if (existing != null) {
-                existing.setLatLng(pos);
-                existing.setCircleColor(MapStyleHelper.getNodeColor(node));
-                existing.setCircleRadius(node.isSosActive ? 16f : 10f);
-                circleManager.update(existing);
+            Circle existingNode = nodeCircles.get(node.meshId);
+            if (existingNode != null) {
+                existingNode.setLatLng(theirPos);
+                existingNode.setCircleColor(MapStyleHelper.getNodeColor(node));
+                existingNode.setCircleRadius(node.isSosActive ? 16f : 10f);
+                circleManager.update(existingNode);
             } else {
                 CircleOptions options = new CircleOptions()
-                        .withLatLng(pos).withCircleRadius(node.isSosActive ? 16f : 10f)
-                        .withCircleColor(MapStyleHelper.getNodeColor(node)).withCircleStrokeWidth(1.5f).withCircleStrokeColor("#FFFFFF");
+                        .withLatLng(theirPos).withCircleRadius(node.isSosActive ? 16f : 10f)
+                        .withCircleColor(MapStyleHelper.getNodeColor(node))
+                        .withCircleStrokeWidth(1.5f).withCircleStrokeColor("#FFFFFF");
                 nodeCircles.put(node.meshId, circleManager.create(options));
             }
         }
-    }
 
-    private void downloadOfflineMapRegion() {
-        if (locationManager == null || !locationManager.hasValidLocation()) return;
-        double myLat = locationManager.getLatitude();
-        double myLon = locationManager.getLongitude();
-
-        org.maplibre.android.offline.OfflineRegionDefinition definition = new org.maplibre.android.offline.OfflineTilePyramidRegionDefinition(
-                OFFLINE_STYLE_URL,
-                new org.maplibre.android.geometry.LatLngBounds.Builder()
-                        .include(new LatLng(myLat + 0.1, myLon + 0.1))
-                        .include(new LatLng(myLat - 0.1, myLon - 0.1)).build(),
-                10, 16, activity.getResources().getDisplayMetrics().density
-        );
-
-        org.maplibre.android.offline.OfflineManager.getInstance(activity).createOfflineRegion(
-                definition, "RescueLink Area".getBytes(),
-                new org.maplibre.android.offline.OfflineManager.CreateOfflineRegionCallback() {
-                    @Override public void onCreate(org.maplibre.android.offline.OfflineRegion offlineRegion) {
-                        offlineRegion.setDownloadState(org.maplibre.android.offline.OfflineRegion.STATE_ACTIVE);
-                    }
-                    @Override public void onError(String error) {}
-                }
-        );
+        // 3. Update the Lines and Distances via GeoJSON
+        if (nodeLineManager != null) {
+            nodeLineManager.updateLines(myLat, myLon, nodeStore.getAllNodes());
+        }
     }
 
     // --- Lifecycle Pass-throughs ---
