@@ -52,21 +52,20 @@ public class MapUIManager {
     }
 
     public void init(Bundle savedInstanceState) {
-        mapContainer = activity.findViewById(R.id.mapContainer);
+        mapContainer = activity.findViewById(R.id.map_box_container);
         mapView = activity.findViewById(R.id.mapView);
-        btnToggleMap = activity.findViewById(R.id.btnToggleMap);
 
-        mapContainer.post(() -> mapContainer.setTranslationY(mapContainer.getHeight()));
-        mapContainer.setVisibility(View.VISIBLE);
-
+        // MotionLayout handles the visibility and sliding now, so we just prep the map!
         mapView.onCreate(savedInstanceState);
+        mapView.onStart();
+        mapView.onResume();
         mapView.getMapAsync(map -> {
             mapLibreMap = map;
             map.setStyle(OFFLINE_STYLE_URL, style -> {
 
                 // Initialize both managers
                 circleManager = new CircleManager(mapView, map, style);
-                nodeLineManager = new NodeLineManager(map); // <--- Setup the lines
+                nodeLineManager = new NodeLineManager(map);
 
                 isMapLoaded = true;
 
@@ -84,11 +83,10 @@ public class MapUIManager {
                 });
 
                 startDrawingLoop();
-                // downloadOfflineMapRegion(); // Uncomment if you have the offline logic ready
             });
         });
 
-        btnToggleMap.setOnClickListener(v -> toggleMapVisibility());
+        // We deleted the btnToggleMap.setOnClickListener here!
     }
 
     private void toggleMapVisibility() {

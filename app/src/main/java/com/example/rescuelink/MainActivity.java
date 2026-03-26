@@ -21,6 +21,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.motion.widget.MotionLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -50,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private PacketDeduplicator deduplicator;
     private NearbyMeshManager nearbyManager;
     private HotspotMeshManager hotspotManager;
-    private com.example.rescuelink.TransportBroker audioBroker; // The Unified Pipe
+    private com.example.rescuelink.TransportBroker audioBroker;
     private OpusAudioManager audioManager;
     private BleBeaconManager bleBeacon;
 
@@ -68,10 +69,10 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    // --- UI Elements ---
-    private TextView statusText, myIdText, debugLog, channelStatusText;
+    // --- UPDATED UI Elements (Matching new XML) ---
+    private TextView statusText, deviceModelText, debugLogText, channelStatusText;
     private ScrollView logScrollView;
-    private Button btnPtt, btnSend, btnDisconnect, btnSos;
+    private Button btnPtt, btnSend, btnReset, btnSos;
     private EditText inputMessage;
     private SharedPreferences prefs;
 
@@ -144,26 +145,44 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ==========================================
-    //      UI INIT
+    //      UI INIT (UPDATED)
     // ==========================================
 
     private void initUI() {
-        statusText        = findViewById(R.id.statusText);
-        myIdText          = findViewById(R.id.myIdText);
-        debugLog          = findViewById(R.id.debugLog);
-        logScrollView     = (ScrollView) debugLog.getParent();
-        btnPtt            = findViewById(R.id.btnPtt);
+        // Mapped to the new MotionLayout XML IDs
+        statusText        = findViewById(R.id.statusBanner);
+        deviceModelText   = findViewById(R.id.deviceModelText);
+        debugLogText      = findViewById(R.id.debugLogText);
+        logScrollView     = findViewById(R.id.log_scrollview);
+        btnPtt            = findViewById(R.id.btnHoldToTalk);
         btnSend           = findViewById(R.id.btnSend);
-        btnDisconnect     = findViewById(R.id.btnDisconnect);
+        btnReset          = findViewById(R.id.btnReset);
         btnSos            = findViewById(R.id.btnSos);
         inputMessage      = findViewById(R.id.inputMessage);
         channelStatusText = findViewById(R.id.channelStatusText);
 
-        myIdText.setText(String.format("%s [%s]", USER_NICKNAME, myMeshId));
-        debugLog.setMovementMethod(new ScrollingMovementMethod());
+        if (deviceModelText != null) {
+            deviceModelText.setText(String.format("%s [%s]", USER_NICKNAME, myMeshId));
+        }
 
-        btnPtt.setVisibility(View.GONE);
-        btnSos.setVisibility(View.GONE);
+        if (debugLogText != null) {
+            debugLogText.setMovementMethod(new ScrollingMovementMethod());
+        }
+
+        if (btnPtt != null) btnPtt.setVisibility(View.GONE);
+
+        // --- NEW: MotionLayout Map Toggle Logic ---
+        View mapHandle = findViewById(R.id.map_box_handle);
+        MotionLayout motionLayout = findViewById(R.id.motionLayout);
+        if (mapHandle != null && motionLayout != null) {
+            mapHandle.setOnClickListener(v -> {
+                if (motionLayout.getProgress() > 0.5f) {
+                    motionLayout.transitionToStart(); // Slide map DOWN
+                } else {
+                    motionLayout.transitionToEnd();   // Slide map UP
+                }
+            });
+        }
     }
 
     // ==========================================
@@ -182,21 +201,17 @@ public class MainActivity extends AppCompatActivity {
         locationManager   = new com.example.rescuelink.location.RescueLinkLocationManager(this);
         locationManager.startUpdates();
 
-        // 1. Initialize Unified Broker
         audioBroker = new com.example.rescuelink.TransportBroker(
                 nearbyManager, hotspotManager, deduplicator, this::handleIncomingPacket
         );
 
-        // 2. Initialize Broadcaster using audioBroker
         locationBroadcaster = new com.example.rescuelink.location.LocationBroadcaster(audioBroker, myMeshId, locationManager);
         locationBroadcaster.setStatusProvider(new com.example.rescuelink.location.LocationBroadcaster.StatusProvider() {
             @Override
-            public int getBatteryLevel() {
-                return MainActivity.this.getBatteryLevel();
-            }
+            public int getBatteryLevel() { return MainActivity.this.getBatteryLevel(); }
             @Override
             public boolean isSosActive() {
-                return statusText.getText().toString().contains("SOS");
+                return statusText != null && statusText.getText().toString().contains("SOS");
             }
         });
         locationBroadcaster.start();
@@ -222,11 +237,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ==========================================
-    //      LISTENERS
+    //      LISTENERS (UPDATED)
     // ==========================================
 
     private void setupListeners() {
-        if (audioManager.canTransmitAudio()) {
+        if (audioManager.canTransmitAudio() && btnPtt != null) {
             btnPtt.setVisibility(View.VISIBLE);
             btnPtt.setOnTouchListener((v, event) -> {
                 int action = event.getAction();
@@ -241,25 +256,18 @@ public class MainActivity extends AppCompatActivity {
                     claimChannel(myMeshId);
                     sendControlPacket("PTT_START:" + myMeshId);
 
-                    // Central Gate - Tell the broker to pause GPS/Status traffic
                     if (audioBroker != null) audioBroker.setAudioActive(true);
 
                     audioManager.startRecording();
-                    btnPtt.setText(R.string.ptt_talking);
+                    btnPtt.setText("🗣 TALKING...");
                     v.performClick();
 
                 } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
                     if (myMeshId.equals(channelOwner)) {
-                        // 1. Stop audio first (clears the bandwidth pipe immediately)
                         audioManager.stopRecording();
-
-                        // 2. Open the gate (allow GPS/Status again)
                         if (audioBroker != null) audioBroker.setAudioActive(false);
-
-                        // 3. Release locally
                         releaseChannel();
 
-                        // 4. Progressive resend (Fires through the newly cleared pipe)
                         sendControlPacket("PTT_END:" + myMeshId);
                         new Handler(Looper.getMainLooper()).postDelayed(() -> sendControlPacket("PTT_END:" + myMeshId), 150);
                         new Handler(Looper.getMainLooper()).postDelayed(() -> sendControlPacket("PTT_END:" + myMeshId), 400);
@@ -269,42 +277,43 @@ public class MainActivity extends AppCompatActivity {
                 }
                 return true;
             });
-        } else {
-            btnPtt.setVisibility(View.GONE);
-            log(getString(R.string.log_repeater_only, Build.VERSION.SDK_INT));
         }
 
-        btnSend.setOnClickListener(v -> {
-            if (audioBroker == null) { log("ERROR: Mesh not ready."); return; }
-            String m = inputMessage.getText().toString().trim();
-            if (!m.isEmpty()) {
-                MeshPacket textPacket = new MeshPacket(
-                        'M', myMeshId, MeshPacket.BROADCAST_ID,
-                        m.getBytes(StandardCharsets.UTF_8));
-                audioBroker.send(textPacket);
-                log("Me: " + m);
-                inputMessage.setText("");
-            }
-        });
+        if (btnSend != null) {
+            btnSend.setOnClickListener(v -> {
+                if (audioBroker == null) return;
+                String m = inputMessage.getText().toString().trim();
+                if (!m.isEmpty()) {
+                    MeshPacket textPacket = new MeshPacket('M', myMeshId, MeshPacket.BROADCAST_ID, m.getBytes(StandardCharsets.UTF_8));
+                    audioBroker.send(textPacket);
+                    log("Me: " + m);
+                    inputMessage.setText("");
+                }
+            });
+        }
 
-        btnSos.setVisibility(View.VISIBLE);
-        btnSos.setOnClickListener(v -> {
-            MeshPacket sosPacket = new MeshPacket(
-                    'E', myMeshId, MeshPacket.BROADCAST_ID,
-                    "SOS".getBytes(StandardCharsets.UTF_8));
-            audioBroker.send(sosPacket);
-            bleBeacon.startSosBeacon(0.0, 0.0, getBatteryLevel(), myMeshId);
-            log("SOS BROADCAST SENT on all channels");
-            statusText.setText(R.string.status_sos_active);
-            if (nodeLocationStore != null) nodeLocationStore.markSosActive(myMeshId);
-        });
+        if (btnSos != null) {
+            btnSos.setVisibility(View.VISIBLE);
+            btnSos.setOnClickListener(v -> {
+                MeshPacket sosPacket = new MeshPacket('E', myMeshId, MeshPacket.BROADCAST_ID, "SOS".getBytes(StandardCharsets.UTF_8));
+                if (audioBroker != null) audioBroker.send(sosPacket);
+                if (bleBeacon != null) bleBeacon.startSosBeacon(0.0, 0.0, getBatteryLevel(), myMeshId);
+                log("SOS BROADCAST SENT");
+                if (statusText != null) statusText.setText(R.string.status_sos_active);
+                if (nodeLocationStore != null) nodeLocationStore.markSosActive(myMeshId);
+            });
+        }
 
-        btnDisconnect.setOnClickListener(v -> {
-            log("MANUAL RESET: Clearing all links...");
-            nearbyManager.disconnectAll();
-            hotspotManager.stop();
-            nearbyManager.startAutonomousNetwork();
-        });
+        if (btnReset != null) {
+            btnReset.setOnClickListener(v -> {
+                log("MANUAL RESET: Clearing all links...");
+                if (nearbyManager != null) {
+                    nearbyManager.disconnectAll();
+                    nearbyManager.startAutonomousNetwork();
+                }
+                if (hotspotManager != null) hotspotManager.stop();
+            });
+        }
     }
 
     // ==========================================
@@ -327,29 +336,29 @@ public class MainActivity extends AppCompatActivity {
     private void updateChannelStatus() {
         runOnUiThread(() -> {
             if (channelOwner == null) {
-                if (audioManager != null && audioManager.canTransmitAudio()) {
+                if (audioManager != null && audioManager.canTransmitAudio() && btnPtt != null) {
                     btnPtt.setEnabled(true);
                     btnPtt.setAlpha(1.0f);
-                    btnPtt.setText(R.string.ptt_idle);
+                    btnPtt.setText("HOLD TO TALK");
                 }
                 if (channelStatusText != null) {
                     channelStatusText.setText("Channel: Free");
-                    channelStatusText.setTextColor(getResources().getColor(android.R.color.holo_green_dark, null));
+                    channelStatusText.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark));
                 }
             } else if (myMeshId.equals(channelOwner)) {
                 if (channelStatusText != null) {
                     channelStatusText.setText("Channel: YOU are transmitting");
-                    channelStatusText.setTextColor(getResources().getColor(android.R.color.holo_orange_dark, null));
+                    channelStatusText.setTextColor(ContextCompat.getColor(this, android.R.color.holo_orange_dark));
                 }
             } else {
-                if (audioManager != null && audioManager.canTransmitAudio()) {
+                if (audioManager != null && audioManager.canTransmitAudio() && btnPtt != null) {
                     btnPtt.setEnabled(false);
                     btnPtt.setAlpha(0.4f);
                     btnPtt.setText(channelOwner + " talking...");
                 }
                 if (channelStatusText != null) {
                     channelStatusText.setText("Channel: " + channelOwner + " is talking");
-                    channelStatusText.setTextColor(getResources().getColor(android.R.color.holo_red_dark, null));
+                    channelStatusText.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark));
                 }
             }
         });
@@ -357,20 +366,18 @@ public class MainActivity extends AppCompatActivity {
 
     private void sendControlPacket(String controlMessage) {
         if (audioBroker == null) return;
-        MeshPacket controlPacket = new MeshPacket(
-                'C', myMeshId, MeshPacket.BROADCAST_ID,
-                controlMessage.getBytes(StandardCharsets.UTF_8));
+        MeshPacket controlPacket = new MeshPacket('C', myMeshId, MeshPacket.BROADCAST_ID, controlMessage.getBytes(StandardCharsets.UTF_8));
         audioBroker.send(controlPacket);
     }
 
     // ==========================================
-    //      PACKET HANDLER (CRASH-PROOF)
+    //      PACKET HANDLER
     // ==========================================
 
     private void handleIncomingPacket(MeshPacket packet, String sourceId) {
         try {
             if (packet == null || sourceId == null) return;
-            nearbyManager.updateRoutingTable(packet.originId, sourceId);
+            if (nearbyManager != null) nearbyManager.updateRoutingTable(packet.originId, sourceId);
             boolean isForMe = packet.isBroadcast() || packet.targetId.equals(myMeshId);
 
             if (isForMe) {
@@ -408,7 +415,9 @@ public class MainActivity extends AppCompatActivity {
                     case 'E':
                         log("SOS RECEIVED from " + packet.originId);
                         if (nodeLocationStore != null) nodeLocationStore.markSosActive(packet.originId);
-                        runOnUiThread(() -> statusText.setText(getString(R.string.status_sos_received, packet.originId)));
+                        runOnUiThread(() -> {
+                            if (statusText != null) statusText.setText(getString(R.string.status_sos_received, packet.originId));
+                        });
                         break;
                     case 'C':
                         handleControlPacket(packet.originId, packet.payload);
@@ -428,7 +437,7 @@ public class MainActivity extends AppCompatActivity {
             if (!myMeshId.equals(talkerId)) {
                 channelOwner = talkerId;
                 runOnUiThread(() -> {
-                    if (audioManager != null && audioManager.canTransmitAudio()) {
+                    if (audioManager != null && audioManager.canTransmitAudio() && btnPtt != null) {
                         btnPtt.setEnabled(false);
                         btnPtt.setAlpha(0.4f);
                         btnPtt.setText(talkerId + " talking...");
@@ -443,10 +452,10 @@ public class MainActivity extends AppCompatActivity {
                 channelOwner = null;
                 channelTimeoutHandler.removeCallbacks(channelTimeoutRunnable);
                 runOnUiThread(() -> {
-                    if (audioManager != null && audioManager.canTransmitAudio()) {
+                    if (audioManager != null && audioManager.canTransmitAudio() && btnPtt != null) {
                         btnPtt.setEnabled(true);
                         btnPtt.setAlpha(1.0f);
-                        btnPtt.setText(R.string.ptt_idle);
+                        btnPtt.setText("HOLD TO TALK");
                     }
                     if (channelStatusText != null) channelStatusText.setText("Channel: Free");
                 });
@@ -493,7 +502,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ==========================================
-    //      HELPERS
+    //      HELPERS & PERMISSIONS
     // ==========================================
 
     private int getBatteryLevel() {
@@ -508,22 +517,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void setStatusText(String text) {
-        runOnUiThread(() -> statusText.setText(text));
-    }
-
-    public void log(String msg) {
-        String t = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
         runOnUiThread(() -> {
-            if (debugLog != null) {
-                debugLog.append("\n[" + t + "] " + msg);
-                if (logScrollView != null) logScrollView.post(() -> logScrollView.fullScroll(View.FOCUS_DOWN));
-            }
+            if (statusText != null) statusText.setText(text);
         });
     }
 
-    // ==========================================
-    //      PERMISSIONS
-    // ==========================================
+    // --- UPDATED LOG METHOD: Handles the auto-scrolling ---
+    public void log(String msg) {
+        String t = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
+        runOnUiThread(() -> {
+            if (debugLogText != null) {
+                debugLogText.append("\n[" + t + "] " + msg);
+                if (logScrollView != null) {
+                    logScrollView.post(() -> logScrollView.fullScroll(View.FOCUS_DOWN));
+                }
+            }
+        });
+    }
 
     private boolean hasPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -554,8 +564,7 @@ public class MainActivity extends AppCompatActivity {
             if (hasPermissions()) initMeshInfrastructure();
             else {
                 log(getString(R.string.log_permissions_denied));
-                log(getString(R.string.log_permissions_instruction));
-                statusText.setText(R.string.status_permissions_denied);
+                if (statusText != null) statusText.setText(R.string.status_permissions_denied);
             }
         }
     }
