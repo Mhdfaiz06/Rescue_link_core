@@ -27,6 +27,7 @@ import androidx.core.content.ContextCompat;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -63,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
     private final Handler channelTimeoutHandler = new Handler(Looper.getMainLooper());
     private final Runnable channelTimeoutRunnable = () -> {
         if (channelOwner != null) {
+            // [BUG-2 FIX]: Ensure L/S packets resume if a session times out!
+            if (audioBroker != null) audioBroker.setAudioActive(false);
             log("CHANNEL: Auto-released after timeout (owner: " + channelOwner + ")");
             releaseChannel();
         }
@@ -293,7 +296,8 @@ public class MainActivity extends AppCompatActivity {
                     'E', myMeshId, MeshPacket.BROADCAST_ID,
                     "SOS".getBytes(StandardCharsets.UTF_8));
             audioBroker.send(sosPacket);
-            bleBeacon.startSosBeacon(0.0, 0.0, getBatteryLevel(), myMeshId);
+            // [CHANGE APPLIED]: Pass actual GPS to BLE Beacon
+            bleBeacon.startSosBeacon(locationManager.getLatitude(), locationManager.getLongitude(), getBatteryLevel(), myMeshId);
             log("SOS BROADCAST SENT on all channels");
             statusText.setText(R.string.status_sos_active);
             if (nodeLocationStore != null) nodeLocationStore.markSosActive(myMeshId);
@@ -367,7 +371,13 @@ public class MainActivity extends AppCompatActivity {
     //      PACKET HANDLER (CRASH-PROOF)
     // ==========================================
 
-    private void handleIncomingPacket(MeshPacket packet, String sourceId) {
+    // ==========================================
+    //      PACKET HANDLER (CRASH-PROOF)
+    // ==========================================
+
+    // [CHANGE APPLIED]: Signature updated to accept originalEncryptedPayload
+    // [CHANGE APPLIED]: Signature updated to accept originalEncryptedPayload
+    private void handleIncomingPacket(MeshPacket packet, String sourceId, byte[] originalEncryptedPayload) {
         try {
             if (packet == null || sourceId == null) return;
             nearbyManager.updateRoutingTable(packet.originId, sourceId);
@@ -376,7 +386,10 @@ public class MainActivity extends AppCompatActivity {
             if (isForMe) {
                 switch (packet.tag) {
                     case 'A':
-                        if (audioManager != null) audioManager.playIncomingAudio(packet.payload);
+                        // [BUG-1 FIX]: Passive relay-only nodes (API < Q) must stay silent.
+                        if (audioManager != null && audioManager.canTransmitAudio()) {
+                            audioManager.playIncomingAudio(packet.payload);
+                        }
                         break;
                     case 'M':
                         if (packet.payload != null) {
@@ -415,7 +428,8 @@ public class MainActivity extends AppCompatActivity {
                         break;
                 }
             }
-            if (audioBroker != null) audioBroker.relay(packet, sourceId, isForMe);
+            // Passing originalEncryptedPayload for zero-cost relay
+            if (audioBroker != null) audioBroker.relay(packet, sourceId, isForMe, originalEncryptedPayload);
         } catch (Exception e) {
             Log.e("MainActivity", "handleIncomingPacket error: " + e.getMessage());
         }
@@ -427,6 +441,10 @@ public class MainActivity extends AppCompatActivity {
             String talkerId = control.substring(10);
             if (!myMeshId.equals(talkerId)) {
                 channelOwner = talkerId;
+
+                // [BUG-2 FIX]: Suppress local L/S packets while RELAYING someone else's voice.
+                if (audioBroker != null) audioBroker.setAudioActive(true);
+
                 runOnUiThread(() -> {
                     if (audioManager != null && audioManager.canTransmitAudio()) {
                         btnPtt.setEnabled(false);
@@ -442,6 +460,10 @@ public class MainActivity extends AppCompatActivity {
             if (talkerId.equals(channelOwner)) {
                 channelOwner = null;
                 channelTimeoutHandler.removeCallbacks(channelTimeoutRunnable);
+
+                // [BUG-2 FIX]: Re-enable L/S packets once the remote voice session ends.
+                if (audioBroker != null) audioBroker.setAudioActive(false);
+
                 runOnUiThread(() -> {
                     if (audioManager != null && audioManager.canTransmitAudio()) {
                         btnPtt.setEnabled(true);
@@ -478,18 +500,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void startOptimizationLoop() {
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (nearbyManager != null && nearbyManager.isConnected() && !isAppInBackground) {
-                    int myScore = HotspotMeshManager.calculateNodeScore(MainActivity.this, nearbyManager.getPeerCount(), true);
-                    MeshPacket statusPacket = new MeshPacket('S', myMeshId, MeshPacket.BROADCAST_ID, String.valueOf(myScore).getBytes(StandardCharsets.UTF_8));
-                    if (audioBroker != null) audioBroker.send(statusPacket);
-                }
-                new Handler(Looper.getMainLooper()).postDelayed(this, 10000);
+    // [CHANGE APPLIED]: Cached handler
+    private final Handler optimizationHandler = new Handler(Looper.getMainLooper());
+    private final Runnable optimizationRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (nearbyManager != null && nearbyManager.isConnected() && !isAppInBackground) {
+                int myScore = HotspotMeshManager.calculateNodeScore(MainActivity.this, nearbyManager.getPeerCount(), true);
+                MeshPacket statusPacket = new MeshPacket('S', myMeshId, MeshPacket.BROADCAST_ID, String.valueOf(myScore).getBytes(StandardCharsets.UTF_8));
+                if (audioBroker != null) audioBroker.send(statusPacket);
             }
-        }, 5000);
+            optimizationHandler.postDelayed(this, 10000);
+        }
+    };
+
+    private void startOptimizationLoop() {
+        optimizationHandler.postDelayed(optimizationRunnable, 5000);
     }
 
     // ==========================================
@@ -515,6 +541,15 @@ public class MainActivity extends AppCompatActivity {
         String t = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
         runOnUiThread(() -> {
             if (debugLog != null) {
+                String current = debugLog.getText().toString();
+                String[] lines = current.split("\n");
+
+                // Trim the log if it exceeds 500 lines to prevent memory leaks
+                if (lines.length > 500) {
+                    current = String.join("\n", java.util.Arrays.copyOfRange(lines, lines.length - 400, lines.length));
+                    debugLog.setText(current);
+                }
+
                 debugLog.append("\n[" + t + "] " + msg);
                 if (logScrollView != null) logScrollView.post(() -> logScrollView.fullScroll(View.FOCUS_DOWN));
             }

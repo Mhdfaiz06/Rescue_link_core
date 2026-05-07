@@ -63,7 +63,7 @@ public class RescueLinkLocationManager {
                 .setMinUpdateIntervalMillis(FASTEST_INTERVAL_MS)
                 .setMinUpdateDistanceMeters(MIN_DISPLACEMENT_M)
                 .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-                .setWaitForAccurateLocation(true) // Wait for a better fix if needed
+                .setWaitForAccurateLocation(false) // Wait for a better fix if needed
                 .build();
 
         locationCallback = new LocationCallback() {

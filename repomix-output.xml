@@ -1,0 +1,4393 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.gitignore
+app/.gitignore
+app/build.gradle
+app/proguard-rules.pro
+app/src/androidTest/java/com/example/rescuelink/ExampleInstrumentedTest.java
+app/src/main/AndroidManifest.xml
+app/src/main/ic_launcher-playstore.png
+app/src/main/java/com/example/rescuelink/BleBeaconManager.java
+app/src/main/java/com/example/rescuelink/EncryptionManager.java
+app/src/main/java/com/example/rescuelink/HotspotMeshManager.java
+app/src/main/java/com/example/rescuelink/location/LocationBroadcaster.java
+app/src/main/java/com/example/rescuelink/location/NodeLocationStore.java
+app/src/main/java/com/example/rescuelink/location/RescueLinkLocationManager.java
+app/src/main/java/com/example/rescuelink/MainActivity.java
+app/src/main/java/com/example/rescuelink/map/MapStyleHelper.java
+app/src/main/java/com/example/rescuelink/map/MapUIManager.java
+app/src/main/java/com/example/rescuelink/map/NodeLineManager.java
+app/src/main/java/com/example/rescuelink/mesh/MeshBroker.java
+app/src/main/java/com/example/rescuelink/MeshForegroundService.java
+app/src/main/java/com/example/rescuelink/MeshPacket.java
+app/src/main/java/com/example/rescuelink/NearbyMeshManager.java
+app/src/main/java/com/example/rescuelink/OpusAudioManager.java
+app/src/main/java/com/example/rescuelink/PacketDeduplicator.java
+app/src/main/java/com/example/rescuelink/positioning/TriangulationHelper.java
+app/src/main/java/com/example/rescuelink/TransportBroker.java
+app/src/main/res/drawable/ic_launcher_background.xml
+app/src/main/res/drawable/ic_launcher_foreground.xml
+app/src/main/res/layout/activity_main.xml
+app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+app/src/main/res/mipmap-hdpi/ic_launcher_foreground.webp
+app/src/main/res/mipmap-hdpi/ic_launcher_monochrome.webp
+app/src/main/res/mipmap-hdpi/ic_launcher_round.webp
+app/src/main/res/mipmap-hdpi/ic_launcher.webp
+app/src/main/res/mipmap-mdpi/ic_launcher_foreground.webp
+app/src/main/res/mipmap-mdpi/ic_launcher_monochrome.webp
+app/src/main/res/mipmap-mdpi/ic_launcher_round.webp
+app/src/main/res/mipmap-mdpi/ic_launcher.webp
+app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.webp
+app/src/main/res/mipmap-xhdpi/ic_launcher_monochrome.webp
+app/src/main/res/mipmap-xhdpi/ic_launcher_round.webp
+app/src/main/res/mipmap-xhdpi/ic_launcher.webp
+app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.webp
+app/src/main/res/mipmap-xxhdpi/ic_launcher_monochrome.webp
+app/src/main/res/mipmap-xxhdpi/ic_launcher_round.webp
+app/src/main/res/mipmap-xxhdpi/ic_launcher.webp
+app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.webp
+app/src/main/res/mipmap-xxxhdpi/ic_launcher_monochrome.webp
+app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.webp
+app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp
+app/src/main/res/values-night/themes.xml
+app/src/main/res/values/colors.xml
+app/src/main/res/values/ic_launcher_background.xml
+app/src/main/res/values/strings.xml
+app/src/main/res/values/themes.xml
+app/src/main/res/xml/backup_rules.xml
+app/src/main/res/xml/data_extraction_rules.xml
+app/src/test/java/com/example/rescuelink/ExampleUnitTest.java
+build.gradle
+gradle.properties
+gradle/gradle-daemon-jvm.properties
+gradle/libs.versions.toml
+gradle/wrapper/gradle-wrapper.jar
+gradle/wrapper/gradle-wrapper.properties
+gradlew
+gradlew.bat
+settings.gradle
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path=".gitignore">
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+</file>
+
+<file path="app/.gitignore">
+/build
+</file>
+
+<file path="app/proguard-rules.pro">
+# Add project specific ProGuard rules here.
+# You can control the set of applied configuration files using the
+# proguardFiles setting in build.gradle.
+#
+# For more details, see
+#   http://developer.android.com/guide/developing/tools/proguard.html
+
+# If your project uses WebView with JS, uncomment the following
+# and specify the fully qualified class name to the JavaScript interface
+# class:
+#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
+#   public *;
+#}
+
+# Uncomment this to preserve the line number information for
+# debugging stack traces.
+#-keepattributes SourceFile,LineNumberTable
+
+# If you keep the line number information, uncomment this to
+# hide the original source file name.
+#-renamesourcefileattribute SourceFile
+</file>
+
+<file path="app/src/androidTest/java/com/example/rescuelink/ExampleInstrumentedTest.java">
+package com.example.rescuelink;
+
+import android.content.Context;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import static org.junit.Assert.*;
+
+/**
+ * Instrumented test, which will execute on an Android device.
+ *
+ * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
+ */
+@RunWith(AndroidJUnit4.class)
+public class ExampleInstrumentedTest {
+    @Test
+    public void useAppContext() {
+        // Context of the app under test.
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        assertEquals("com.example.rescuelink", appContext.getPackageName());
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/BleBeaconManager.java">
+package com.example.rescuelink;
+
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.AdvertiseCallback;
+import android.bluetooth.le.AdvertiseData;
+import android.bluetooth.le.AdvertiseSettings;
+import android.bluetooth.le.BluetoothLeAdvertiser;
+import android.content.Context;
+import android.os.ParcelUuid;
+import android.util.Log;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+
+public class BleBeaconManager {
+
+    private BluetoothLeAdvertiser advertiser;
+    private AdvertiseCallback advertiseCallback;
+    private boolean isAdvertising = false;
+
+    public BleBeaconManager(Context context) {
+        BluetoothManager btManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+        if (btManager != null) {
+            BluetoothAdapter adapter = btManager.getAdapter();
+            if (adapter != null && adapter.isEnabled()) {
+                advertiser = adapter.getBluetoothLeAdvertiser();
+            }
+        }
+    }
+
+    public void startSosBeacon(double latitude, double longitude, int batteryLevel, String meshId) {
+        if (advertiser == null || isAdvertising) return;
+
+        byte[] payload = buildSosPayload(latitude, longitude, batteryLevel, meshId);
+
+        AdvertiseSettings settings = new AdvertiseSettings.Builder()
+                .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
+                .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
+                .setConnectable(false)
+                .setTimeout(0)
+                .build();
+
+        ParcelUuid serviceUuid = ParcelUuid.fromString("0000EA62-0000-1000-8000-00805F9B34FB");
+
+        AdvertiseData data = new AdvertiseData.Builder()
+                .addServiceUuid(serviceUuid)
+                .addServiceData(serviceUuid, payload)
+                .setIncludeDeviceName(false)
+                .build();
+
+        advertiseCallback = new AdvertiseCallback() {
+            @Override public void onStartSuccess(AdvertiseSettings settingsInEffect) {
+                isAdvertising = true;
+            }
+            @Override public void onStartFailure(int errorCode) {
+                Log.e("BLE", "Advertise failed: " + errorCode);
+            }
+        };
+
+        try {
+            advertiser.startAdvertising(settings, data, advertiseCallback);
+        } catch (SecurityException e) {
+            Log.e("BLE", "Missing Bluetooth Permission");
+        }
+    }
+
+    private byte[] buildSosPayload(double lat, double lon, int battery, String nodeId) {
+        // Fixed: allocate 14 bytes exactly matching what we write
+        // [1] marker + [4] lat + [4] lon + [1] battery + [1] version + [3] nodeId truncated
+        byte[] idBytes = nodeId.getBytes(StandardCharsets.US_ASCII);
+        // Truncate nodeId to exactly 3 bytes to fit the 14-byte budget
+        int idLen = Math.min(idBytes.length, 3);
+
+        ByteBuffer bb = ByteBuffer.allocate(11 + idLen); // exact size
+        bb.put((byte) 0xE5);                    // 1 byte — RescueLink SOS marker
+        bb.putInt((int)(lat * 1e6));            // 4 bytes — latitude
+        bb.putInt((int)(lon * 1e6));            // 4 bytes — longitude
+        bb.put((byte) battery);                 // 1 byte  — battery level
+        bb.put((byte) 0x01);                    // 1 byte  — protocol version
+        bb.put(idBytes, 0, idLen);              // 3 bytes — node ID truncated
+        return bb.array();
+    }
+
+    public void stopSosBeacon() {
+        if (advertiser != null && advertiseCallback != null && isAdvertising) {
+            try {
+                advertiser.stopAdvertising(advertiseCallback);
+            } catch (SecurityException e) {
+                Log.e("BLE", "Missing Bluetooth Permission");
+            }
+            isAdvertising = false;
+        }
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/EncryptionManager.java">
+package com.example.rescuelink;
+
+import android.util.Log;
+
+import java.nio.ByteBuffer;
+import java.security.SecureRandom;
+import java.util.Arrays;
+
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
+public class EncryptionManager {
+
+    private static final String TAG           = "Encryption";
+    private static final int    GCM_IV_LENGTH = 12;
+    private static final int    GCM_TAG_BITS  = 128;
+
+    private static final byte[] PSK = {
+            (byte)0x52, (byte)0x65, (byte)0x73, (byte)0x63,
+            (byte)0x75, (byte)0x65, (byte)0x4C, (byte)0x69,
+            (byte)0x6E, (byte)0x6B, (byte)0x32, (byte)0x30,
+            (byte)0x32, (byte)0x34, (byte)0x53, (byte)0x65,
+            (byte)0x63, (byte)0x75, (byte)0x72, (byte)0x65,
+            (byte)0x4B, (byte)0x65, (byte)0x79, (byte)0x58,
+            (byte)0x58, (byte)0x58, (byte)0x58, (byte)0x58,
+            (byte)0x58, (byte)0x58, (byte)0x58, (byte)0x58
+    };
+
+    // Random salt mixed into counter-based IVs so two devices with
+    // the same sequence counter still produce different IVs
+    private final byte[] deviceSalt;
+    private final SecretKey secretKey;
+
+    public EncryptionManager() {
+        this.secretKey  = new SecretKeySpec(PSK, "AES");
+        // Generate once at startup — fast SecureRandom call only once
+        this.deviceSalt = new byte[4];
+        new SecureRandom().nextBytes(deviceSalt);
+    }
+
+    // ─── Encrypt — FAST PATH for audio ───────────────────────────────────
+    // Uses sequence number + device salt as IV instead of SecureRandom
+    // Eliminates blocking entropy call on the 50fps audio hot path
+    // sequence must be unique per packet — guaranteed by AtomicLong in MeshPacket
+
+    public byte[] encryptWithSequence(byte[] plaintext, long sequence) throws Exception {
+        byte[] iv = buildCounterIv(sequence);
+        return encryptWithIv(plaintext, iv);
+    }
+
+    // ─── Encrypt — SAFE PATH for non-audio ───────────────────────────────
+    // Uses SecureRandom — called at low frequency (text, status, SOS)
+    // so blocking is not a problem
+
+    public byte[] encrypt(byte[] plaintext) throws Exception {
+        byte[] iv = new byte[GCM_IV_LENGTH];
+        new SecureRandom().nextBytes(iv);
+        return encryptWithIv(plaintext, iv);
+    }
+
+    // ─── Core encrypt ────────────────────────────────────────────────────
+
+    private byte[] encryptWithIv(byte[] plaintext, byte[] iv) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey,
+                new GCMParameterSpec(GCM_TAG_BITS, iv));
+        byte[] ciphertext = cipher.doFinal(plaintext);
+
+        // Output: [12 byte IV][ciphertext + 16 byte GCM tag]
+        ByteBuffer result = ByteBuffer.allocate(GCM_IV_LENGTH + ciphertext.length);
+        result.put(iv);
+        result.put(ciphertext);
+        return result.array();
+    }
+
+    // ─── Decrypt ─────────────────────────────────────────────────────────
+    // Same code path for both counter and random IVs — IV is always prepended
+
+    public byte[] decrypt(byte[] encrypted) {
+        if (encrypted == null || encrypted.length < GCM_IV_LENGTH + 1) {
+            Log.w(TAG, "Too short to decrypt: "
+                    + (encrypted == null ? "null" : encrypted.length));
+            return null;
+        }
+        try {
+            byte[] iv         = Arrays.copyOfRange(encrypted, 0, GCM_IV_LENGTH);
+            byte[] ciphertext = Arrays.copyOfRange(encrypted, GCM_IV_LENGTH, encrypted.length);
+
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, secretKey,
+                    new GCMParameterSpec(GCM_TAG_BITS, iv));
+            return cipher.doFinal(ciphertext);
+
+        } catch (javax.crypto.AEADBadTagException e) {
+            // Tampered or wrong key — drop silently
+            // NOT logged at error level — would flood logcat at 50fps for audio
+            Log.d(TAG, "Auth tag mismatch — dropped");
+            return null;
+        } catch (Exception e) {
+            Log.w(TAG, "Decrypt error: " + e.getMessage());
+            return null;
+        }
+    }
+
+    // ─── Counter IV builder ───────────────────────────────────────────────
+    // IV layout: [8 bytes sequence][4 bytes device salt]
+    // Unique per packet because sequence is unique (AtomicLong)
+    // Device salt prevents two devices with same sequence from producing same IV
+
+    private byte[] buildCounterIv(long sequence) {
+        byte[] iv = new byte[GCM_IV_LENGTH];
+        ByteBuffer bb = ByteBuffer.wrap(iv);
+        bb.putLong(sequence);          // 8 bytes
+        bb.put(deviceSalt);            // 4 bytes
+        return iv;
+    }
+
+    public static int overhead() {
+        return GCM_IV_LENGTH + (GCM_TAG_BITS / 8); // 28 bytes per packet
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/HotspotMeshManager.java">
+package com.example.rescuelink;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.wifi.WifiManager;
+import android.os.BatteryManager;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+public class HotspotMeshManager {
+
+    public interface PacketListener {
+        void onPacketReceived(byte[] data, String sourceAddress);
+    }
+
+    private static final int MESH_PORT = 9876;
+    private static final String HOTSPOT_GATEWAY_IP = "192.168.43.1";
+
+    private PacketListener listener;
+
+    private ServerSocket serverSocket;
+    private final List<Socket> connectedClients = new CopyOnWriteArrayList<>();
+    private final List<Socket> outboundConnections = new CopyOnWriteArrayList<>();
+
+    // [CHANGE APPLIED]: Output Stream Cache
+    private final Map<Socket, DataOutputStream> outputStreams = new ConcurrentHashMap<>();
+
+    private boolean isRunning = false;
+    private boolean isBackboneNode = false;
+
+    private final WifiManager wifiManager;
+    private WifiManager.LocalOnlyHotspotReservation hotspotReservation;
+
+    public HotspotMeshManager(Context context, PacketListener listener) {
+        this.listener = listener;
+        this.wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+    }
+
+    public void setPacketListener(PacketListener listener) {
+        this.listener = listener;
+    }
+
+    public void evaluateBackboneRole(int ourScore, Map<String, Integer> peerScores) {
+        boolean weShouldBeBackbone = true;
+        for (int peerScore : peerScores.values()) {
+            if (peerScore > ourScore) { weShouldBeBackbone = false; break; }
+        }
+
+        if (weShouldBeBackbone && !isBackboneNode) {
+            startAsBackboneNode();
+        } else if (!weShouldBeBackbone && isBackboneNode) {
+            stopBackboneNode();
+            connectToBackbone(HOTSPOT_GATEWAY_IP);
+        }
+    }
+
+    public static int calculateNodeScore(Context ctx, int connectedPeerCount, boolean isForegrounded) {
+        int score = 0;
+        IntentFilter intentFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent bat = ctx.registerReceiver(null, intentFilter);
+        if (bat != null) {
+            int level = bat.getIntExtra(BatteryManager.EXTRA_LEVEL, 50);
+            int scale = bat.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
+            score += (int)((level / (float) scale) * 100);
+            int status = bat.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+            if (status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL) {
+                score += 50;
+            }
+        }
+        score += connectedPeerCount * 10;
+        if (!isForegrounded) score -= 20;
+        return score;
+    }
+
+    @SuppressLint("MissingPermission")
+    public void startAsBackboneNode() {
+        isBackboneNode = true;
+        isRunning = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            wifiManager.startLocalOnlyHotspot(new WifiManager.LocalOnlyHotspotCallback() {
+                @Override
+                public void onStarted(WifiManager.LocalOnlyHotspotReservation reservation) {
+                    hotspotReservation = reservation;
+                    startTcpServer();
+                }
+                @Override
+                public void onFailed(int reason) { startTcpServer(); }
+            }, new Handler(Looper.getMainLooper()));
+        } else {
+            startTcpServer();
+        }
+    }
+
+    private void startTcpServer() {
+        new Thread(() -> {
+            try {
+                serverSocket = new ServerSocket(MESH_PORT);
+                serverSocket.setReuseAddress(true);
+                while (isRunning) {
+                    Socket client = serverSocket.accept();
+                    // [CHANGE APPLIED]: Disable Nagle's algorithm for instant RTC bridging
+                    client.setTcpNoDelay(true);
+                    client.setKeepAlive(true);
+                    client.setSoTimeout(30000);
+                    connectedClients.add(client);
+                    handleIncomingClient(client);
+                }
+            } catch (IOException e) {
+                if (isRunning) Log.e("Hotspot", "Server error: " + e.getMessage());
+            }
+        }, "HotspotServer").start();
+    }
+
+    private void handleIncomingClient(Socket client) {
+        new Thread(() -> {
+            try (DataInputStream dis = new DataInputStream(client.getInputStream())) {
+                while (isRunning && client.isConnected()) {
+                    int length = dis.readInt();
+                    if (length <= 0 || length > 65536) break;
+                    byte[] data = new byte[length];
+                    dis.readFully(data);
+                    if (listener != null) listener.onPacketReceived(data, client.getInetAddress().getHostAddress());
+                    relayToOtherClients(client, data);
+                }
+            } catch (IOException e) {
+                Log.d("Hotspot", "Client disconnected: " + e.getMessage());
+            } finally {
+                connectedClients.remove(client);
+                // [CHANGE APPLIED]: Cleanup the stream cache to prevent memory leaks
+                outputStreams.remove(client);
+                try { client.close(); } catch (IOException ignored) {}
+            }
+        }).start();
+    }
+
+    public void connectToBackbone(String backboneIp) {
+        new Thread(() -> {
+            int retries = 0;
+            while (isRunning && retries < 5) {
+                try {
+                    Socket socket = new Socket();
+                    socket.setKeepAlive(true);
+                    // [CHANGE APPLIED]: Disable Nagle's algorithm on the client side too
+                    socket.setTcpNoDelay(true);
+                    socket.connect(new InetSocketAddress(backboneIp, MESH_PORT), 5000);
+                    outboundConnections.add(socket);
+                    listenOnOutboundSocket(socket);
+                    return;
+                } catch (IOException e) {
+                    retries++;
+                    try { Thread.sleep(2000L * retries); } catch (InterruptedException ignored) {}
+                }
+            }
+        }, "HotspotConnector").start();
+    }
+
+    private void listenOnOutboundSocket(Socket socket) {
+        new Thread(() -> {
+            try (DataInputStream dis = new DataInputStream(socket.getInputStream())) {
+                while (isRunning && socket.isConnected()) {
+                    int length = dis.readInt();
+                    if (length <= 0 || length > 65536) break;
+                    byte[] data = new byte[length];
+                    dis.readFully(data);
+                    if (listener != null) listener.onPacketReceived(data, socket.getInetAddress().getHostAddress());
+                }
+            } catch (IOException e) {
+                Log.d("Hotspot", "Backbone disconnected");
+            } finally {
+                outboundConnections.remove(socket);
+                // [CHANGE APPLIED]: Cleanup the stream cache
+                outputStreams.remove(socket);
+                try { socket.close(); } catch (IOException ignored) {}
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    if (isRunning && !isBackboneNode) connectToBackbone(HOTSPOT_GATEWAY_IP);
+                }, 5000);
+            }
+        }).start();
+    }
+
+    public boolean send(byte[] data) {
+        boolean sent = false;
+        byte[] framed = framePacket(data);
+        for (Socket client : connectedClients) { if (writeToSocket(client, framed)) sent = true; }
+        for (Socket conn : outboundConnections) { if (writeToSocket(conn, framed)) sent = true; }
+        return sent;
+    }
+
+    // [CHANGE APPLIED]: Stream Cache implementation
+    private boolean writeToSocket(Socket socket, byte[] framedData) {
+        try {
+            DataOutputStream dos = outputStreams.computeIfAbsent(socket, s -> {
+                try { return new DataOutputStream(s.getOutputStream()); }
+                catch (IOException e) { return null; }
+            });
+            if (dos == null) return false;
+            dos.write(framedData);
+            dos.flush();
+            return true;
+        } catch (IOException e) {
+            outputStreams.remove(socket); // clean up dead stream
+            return false;
+        }
+    }
+
+    private void relayToOtherClients(Socket sender, byte[] data) {
+        byte[] framed = framePacket(data);
+        for (Socket client : connectedClients) {
+            if (client != sender) writeToSocket(client, framed);
+        }
+    }
+
+    private byte[] framePacket(byte[] data) {
+        ByteBuffer bb = ByteBuffer.allocate(4 + data.length);
+        bb.putInt(data.length);
+        bb.put(data);
+        return bb.array();
+    }
+
+    public boolean isConnected() {
+        return !connectedClients.isEmpty() || !outboundConnections.isEmpty();
+    }
+
+    private void stopBackboneNode() {
+        isBackboneNode = false;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (hotspotReservation != null) {
+                hotspotReservation.close();
+                hotspotReservation = null;
+            }
+        }
+
+        try { if (serverSocket != null) serverSocket.close(); } catch (IOException ignored) {}
+        for (Socket s : connectedClients) { try { s.close(); } catch (IOException ignored) {} }
+        connectedClients.clear();
+        outputStreams.clear();
+    }
+
+    public void stop() {
+        isRunning = false;
+        stopBackboneNode();
+        for (Socket s : outboundConnections) { try { s.close(); } catch (IOException ignored) {} }
+        outboundConnections.clear();
+        outputStreams.clear();
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/location/NodeLocationStore.java">
+package com.example.rescuelink.location;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class NodeLocationStore {
+
+    public static class NodeInfo {
+        public final String meshId;
+        public double latitude;
+        public double longitude;
+        public float  accuracy;
+        public int    battery;
+        public long   lastSeenMs;
+        public boolean isSosActive;
+        public boolean hasDirectGps;
+        public String  lastMessage;
+        public long    lastMessageTime;
+
+        public NodeInfo(String meshId) {
+            this.meshId = meshId;
+        }
+
+        public long ageMs() { return System.currentTimeMillis() - lastSeenMs; }
+        public boolean isOnline() { return ageMs() < 120000; }
+        public boolean isLocationStale() { return ageMs() > 300000; }
+    }
+
+    private final Map<String, NodeInfo> nodes = new ConcurrentHashMap<>();
+
+    public interface NodeStoreListener {
+        void onNodeUpdated(NodeInfo node);
+        void onNodeOffline(String meshId);
+    }
+    private NodeStoreListener listener;
+    public void setListener(NodeStoreListener listener) { this.listener = listener; }
+
+    public void updateLocation(String meshId, double lat, double lon, float accuracy, int battery, boolean hasGps) {
+        NodeInfo node = getOrCreate(meshId);
+        node.latitude    = lat;
+        node.longitude   = lon;
+        node.accuracy    = accuracy;
+        node.battery     = battery;
+        node.lastSeenMs  = System.currentTimeMillis();
+        node.hasDirectGps = hasGps;
+        if (listener != null) listener.onNodeUpdated(node);
+    }
+
+    public void markSosActive(String meshId) {
+        NodeInfo node = getOrCreate(meshId);
+        node.isSosActive = true;
+        node.lastSeenMs  = System.currentTimeMillis();
+        if (listener != null) listener.onNodeUpdated(node);
+    }
+
+    public void clearSos(String meshId) {
+        NodeInfo node = nodes.get(meshId);
+        if (node != null) {
+            node.isSosActive = false;
+            if (listener != null) listener.onNodeUpdated(node);
+        }
+    }
+
+    public void updateLastMessage(String meshId, String message) {
+        NodeInfo node = getOrCreate(meshId);
+        node.lastMessage     = message;
+        node.lastMessageTime = System.currentTimeMillis();
+        node.lastSeenMs      = System.currentTimeMillis();
+        if (listener != null) listener.onNodeUpdated(node);
+    }
+
+    public void updateStatus(String meshId, int battery) {
+        NodeInfo node = getOrCreate(meshId);
+        node.battery    = battery;
+        node.lastSeenMs = System.currentTimeMillis();
+        if (listener != null) listener.onNodeUpdated(node);
+    }
+
+    public NodeInfo getNode(String meshId) { return nodes.get(meshId); }
+    public List<NodeInfo> getAllNodes() { return new ArrayList<>(nodes.values()); }
+
+    public List<NodeInfo> getOnlineNodes() {
+        List<NodeInfo> online = new ArrayList<>();
+        for (NodeInfo node : nodes.values()) { if (node.isOnline()) online.add(node); }
+        return online;
+    }
+
+    public int getOnlineCount() {
+        int count = 0;
+        for (NodeInfo node : nodes.values()) { if (node.isOnline()) count++; }
+        return count;
+    }
+
+    private NodeInfo getOrCreate(String meshId) {
+        return nodes.computeIfAbsent(meshId, NodeInfo::new);
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/map/MapStyleHelper.java">
+package com.example.rescuelink.map;
+
+import com.example.rescuelink.location.NodeLocationStore.NodeInfo;
+
+public class MapStyleHelper {
+
+    // Node colors — hex strings for MapLibre
+    public static final String OWN_NODE_COLOR      = "#1565C0"; // blue — you
+    public static final String ACTIVE_GPS_COLOR    = "#2E7D32"; // green — online with GPS
+    public static final String STALE_GPS_COLOR     = "#F9A825"; // amber — online, GPS old
+    public static final String ESTIMATED_COLOR     = "#6A1B9A"; // purple — triangulated
+    public static final String OFFLINE_COLOR       = "#9E9E9E"; // grey — not seen recently
+    public static final String SOS_COLOR           = "#C62828"; // red — SOS active
+    public static final String LOW_BATTERY_COLOR   = "#E65100"; // orange — battery < 20%
+
+    public static String getNodeColor(NodeInfo node) {
+        if (!node.isOnline())         return OFFLINE_COLOR;
+        if (node.isSosActive)         return SOS_COLOR;
+        if (node.battery < 20)        return LOW_BATTERY_COLOR;
+        if (!node.hasDirectGps)       return ESTIMATED_COLOR;
+        if (node.isLocationStale())   return STALE_GPS_COLOR;
+        return ACTIVE_GPS_COLOR;
+    }
+
+    // Human readable status for tap popup
+    public static String getNodeStatusText(NodeInfo node) {
+        if (!node.isOnline())       return "Offline";
+        if (node.isSosActive)       return "🚨 SOS ACTIVE";
+        if (node.battery < 20)      return "⚠️ Low Battery (" + node.battery + "%)";
+        if (!node.hasDirectGps)     return "📍 Position estimated";
+        if (node.isLocationStale()) return "📍 Last known position";
+        return "✓ Online — " + node.battery + "% battery";
+    }
+
+    // Legend entries for the map UI
+    public static String[][] getLegend() {
+        return new String[][] {
+                { OWN_NODE_COLOR,    "You" },
+                { ACTIVE_GPS_COLOR,  "Active node (GPS)" },
+                { STALE_GPS_COLOR,   "Active node (old GPS)" },
+                { ESTIMATED_COLOR,   "Estimated position" },
+                { SOS_COLOR,         "SOS active" },
+                { LOW_BATTERY_COLOR, "Low battery" },
+                { OFFLINE_COLOR,     "Offline" },
+        };
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/mesh/MeshBroker.java">
+package com.example.rescuelink.mesh;
+
+import android.util.Log;
+import com.example.rescuelink.NearbyMeshManager; // Updated class name
+import java.nio.charset.StandardCharsets;
+
+public class MeshBroker {
+    private static final String TAG = "MeshBroker";
+
+    // Updated to match your actual class name
+    private final NearbyMeshManager nearby;
+
+    public MeshBroker(NearbyMeshManager nearby) {
+        this.nearby = nearby;
+    }
+
+    /**
+     * This method is called by LocationBroadcaster.
+     * It converts the GPS string into bytes and sends it through your mesh.
+     */
+    public void broadcast(String data) {
+        if (data == null || data.isEmpty()) return;
+
+        Log.d(TAG, "MeshBroker: Sending to all peers -> " + data);
+
+        if (nearby != null && nearby.isConnected()) {
+            // 1. Convert String to byte array (Your NearbyMeshManager needs bytes)
+            byte[] payload = data.getBytes(StandardCharsets.UTF_8);
+
+            // 2. Call your actual method: sendToAll
+            nearby.sendToAll(payload);
+        }
+    }
+
+    public void shutdown() {
+        Log.d(TAG, "MeshBroker: Shutting down.");
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/MeshForegroundService.java">
+package com.example.rescuelink;
+
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.net.wifi.WifiManager;
+import android.os.Build;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Looper;
+import android.os.PowerManager;
+import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
+
+public class MeshForegroundService extends Service {
+
+    private static final String CHANNEL_ID = "RescueLinkMeshChannel";
+    private static final int NOTIFICATION_ID = 1;
+
+    private PowerManager.WakeLock wakeLock;
+    private WifiManager.WifiLock wifiLock;
+
+    // [CHANGE APPLIED]: 9-Minute WakeLock renewal handler
+    private static final long WAKELOCK_RENEW_INTERVAL_MS = 9 * 60 * 1000L;
+    private final Handler wakeLockRenewHandler = new Handler(Looper.getMainLooper());
+    private final Runnable wakeLockRenewer = new Runnable() {
+        @Override
+        public void run() {
+            if (wakeLock != null) {
+                if (wakeLock.isHeld()) wakeLock.release();
+                wakeLock.acquire(10 * 60 * 1000L);
+            }
+            wakeLockRenewHandler.postDelayed(this, WAKELOCK_RENEW_INTERVAL_MS);
+        }
+    };
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        createNotificationChannel();
+        acquireHardwareLocks();
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        String meshId = intent != null ? intent.getStringExtra("MESH_ID") : "Unknown";
+
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("RescueLink Mesh Active")
+                .setContentText("Routing packets for Mesh ID: " + meshId)
+                .setSmallIcon(android.R.drawable.ic_menu_share)
+                .setContentIntent(pendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setOngoing(true)
+                .build();
+
+        startForeground(NOTIFICATION_ID, notification);
+        return START_STICKY;
+    }
+
+    private void acquireHardwareLocks() {
+        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (powerManager != null) {
+            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "RescueLink::CpuWakeLock");
+            wakeLock.acquire(10 * 60 * 1000L);
+            // [CHANGE APPLIED]: Start renewal cycle
+            wakeLockRenewHandler.postDelayed(wakeLockRenewer, WAKELOCK_RENEW_INTERVAL_MS);
+        }
+
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (wifiManager != null) {
+            wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "RescueLink::WifiRadioLock");
+            wifiLock.acquire();
+        }
+    }
+
+    private void releaseHardwareLocks() {
+        if (wakeLock != null && wakeLock.isHeld()) {
+            wakeLock.release();
+        }
+        if (wifiLock != null && wifiLock.isHeld()) {
+            wifiLock.release();
+        }
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel serviceChannel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Mesh Routing Service",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            serviceChannel.setDescription("Keeps the decentralized network alive in the background");
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(serviceChannel);
+            }
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        // [CHANGE APPLIED]: Stop renewal timer
+        wakeLockRenewHandler.removeCallbacks(wakeLockRenewer);
+        releaseHardwareLocks();
+        super.onDestroy();
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/PacketDeduplicator.java">
+package com.example.rescuelink;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+
+public class PacketDeduplicator {
+
+    // [CHANGE APPLIED]: General packet dedup — 500 entries is fine for text/GPS
+    private final Set<String> seen = Collections.newSetFromMap(
+            Collections.synchronizedMap(new LinkedHashMap<String, Boolean>(512, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, Boolean> eldest) {
+                    return size() > 500;
+                }
+            })
+    );
+
+    // [CHANGE APPLIED]: Audio-specific dedup — 2000 entries (50fps × ~40s window)
+    private final Set<String> audioSeen = Collections.newSetFromMap(
+            Collections.synchronizedMap(new LinkedHashMap<String, Boolean>(2048, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, Boolean> eldest) {
+                    return size() > 2000;
+                }
+            })
+    );
+
+    public boolean checkAndMark(MeshPacket packet) {
+        String key = packet.deduplicationKey();
+
+        if (packet.tag == 'A') {
+            synchronized (audioSeen) {
+                if (audioSeen.contains(key)) return false;
+                audioSeen.add(key);
+                return true;
+            }
+        }
+
+        // Regular packets use the smaller cache
+        synchronized (seen) {
+            if (seen.contains(key)) return false;
+            seen.add(key);
+            return true;
+        }
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/positioning/TriangulationHelper.java">
+package com.example.rescuelink.positioning;
+
+import java.util.List;
+
+public class TriangulationHelper {
+
+    // Convert RSSI (signal strength in dBm) to approximate distance in meters
+    public static double rssiToDistance(int rssi) {
+        double pathLossExponent = 2.5;
+        double referenceRssi    = -69;
+        double exponent = (referenceRssi - rssi) / (10.0 * pathLossExponent);
+        return Math.pow(10, exponent);
+    }
+
+    // Estimate position from 3+ anchor nodes with known GPS and measured RSSI
+    public static EstimatedPosition triangulate(List<AnchorNode> anchors) {
+        if (anchors == null || anchors.size() < 3) return null;
+
+        // Weighted centroid — closer nodes (stronger RSSI) get more weight
+        double totalWeight = 0;
+        double weightedLat = 0;
+        double weightedLon = 0;
+
+        for (AnchorNode anchor : anchors) {
+            double distance = rssiToDistance(anchor.rssi);
+            double weight   = 1.0 / (distance * distance);
+            weightedLat    += anchor.latitude  * weight;
+            weightedLon    += anchor.longitude * weight;
+            totalWeight    += weight;
+        }
+
+        if (totalWeight == 0) return null;
+
+        EstimatedPosition result = new EstimatedPosition();
+        result.latitude  = weightedLat / totalWeight;
+        result.longitude = weightedLon / totalWeight;
+        result.accuracyMeters = estimateAccuracy(anchors);
+
+        return result;
+    }
+
+    private static float estimateAccuracy(List<AnchorNode> anchors) {
+        float totalDist = 0;
+        for (AnchorNode a : anchors) {
+            totalDist += rssiToDistance(a.rssi);
+        }
+        return totalDist / anchors.size();
+    }
+
+    public static class AnchorNode {
+        public String meshId;
+        public double latitude;
+        public double longitude;
+        public int    rssi;
+    }
+
+    public static class EstimatedPosition {
+        public double latitude;
+        public double longitude;
+        public float  accuracyMeters;
+    }
+}
+</file>
+
+<file path="app/src/main/res/drawable/ic_launcher_background.xml">
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#3DDC84"
+        android:pathData="M0,0h108v108h-108z" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M9,0L9,108"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M19,0L19,108"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M29,0L29,108"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M39,0L39,108"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M49,0L49,108"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M59,0L59,108"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M69,0L69,108"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M79,0L79,108"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M89,0L89,108"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M99,0L99,108"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,9L108,9"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,19L108,19"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,29L108,29"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,39L108,39"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,49L108,49"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,59L108,59"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,69L108,69"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,79L108,79"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,89L108,89"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M0,99L108,99"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M19,29L89,29"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M19,39L89,39"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M19,49L89,49"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M19,59L89,59"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M19,69L89,69"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M19,79L89,79"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M29,19L29,89"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M39,19L39,89"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M49,19L49,89"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M59,19L59,89"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M69,19L69,89"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M79,19L79,89"
+        android:strokeWidth="0.8"
+        android:strokeColor="#33FFFFFF" />
+</vector>
+</file>
+
+<file path="app/src/main/res/drawable/ic_launcher_foreground.xml">
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="85.84757"
+                android:endY="92.4963"
+                android:startX="42.9492"
+                android:startY="49.59793"
+                android:type="linear">
+                <item
+                    android:color="#44000000"
+                    android:offset="0.0" />
+                <item
+                    android:color="#00000000"
+                    android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="nonZero"
+        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
+        android:strokeWidth="1"
+        android:strokeColor="#00000000" />
+</vector>
+</file>
+
+<file path="app/src/main/res/values-night/themes.xml">
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.RescueLink" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your dark theme here. -->
+        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+    </style>
+</resources>
+</file>
+
+<file path="app/src/main/res/values/colors.xml">
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>
+</file>
+
+<file path="app/src/main/res/values/ic_launcher_background.xml">
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#292E53</color>
+</resources>
+</file>
+
+<file path="app/src/main/res/values/themes.xml">
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.RescueLink" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    </style>
+
+    <style name="Theme.RescueLink" parent="Base.Theme.RescueLink" />
+</resources>
+</file>
+
+<file path="app/src/main/res/xml/backup_rules.xml">
+<?xml version="1.0" encoding="utf-8"?><!--
+   Sample backup rules file; uncomment and customize as necessary.
+   See https://developer.android.com/guide/topics/data/autobackup
+   for details.
+   Note: This file is ignored for devices older than API 31
+   See https://developer.android.com/about/versions/12/backup-restore
+-->
+<full-backup-content>
+    <!--
+   <include domain="sharedpref" path="."/>
+   <exclude domain="sharedpref" path="device.xml"/>
+-->
+</full-backup-content>
+</file>
+
+<file path="app/src/main/res/xml/data_extraction_rules.xml">
+<?xml version="1.0" encoding="utf-8"?><!--
+   Sample data extraction rules file; uncomment and customize as necessary.
+   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
+   for details.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- TODO: Use <include> and <exclude> to control what is backed up.
+        <include .../>
+        <exclude .../>
+        -->
+    </cloud-backup>
+    <!--
+    <device-transfer>
+        <include .../>
+        <exclude .../>
+    </device-transfer>
+    -->
+</data-extraction-rules>
+</file>
+
+<file path="app/src/test/java/com/example/rescuelink/ExampleUnitTest.java">
+package com.example.rescuelink;
+
+import org.junit.Test;
+
+import static org.junit.Assert.*;
+
+/**
+ * Example local unit test, which will execute on the development machine (host).
+ *
+ * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
+ */
+public class ExampleUnitTest {
+    @Test
+    public void addition_isCorrect() {
+        assertEquals(4, 2 + 2);
+    }
+}
+</file>
+
+<file path="build.gradle">
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+plugins {
+    alias(libs.plugins.android.application) apply false
+}
+</file>
+
+<file path="gradle.properties">
+# Project-wide Gradle settings.
+# IDE (e.g. Android Studio) users:
+# Gradle settings configured through the IDE *will override*
+# any settings specified in this file.
+# For more details on how to configure your build environment visit
+# http://www.gradle.org/docs/current/userguide/build_environment.html
+# Specifies the JVM arguments used for the daemon process.
+# The setting is particularly useful for tweaking memory settings.
+org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+# When configured, Gradle will run in incubating parallel mode.
+# This option should only be used with decoupled projects. For more details, visit
+# https://developer.android.com/r/tools/gradle-multi-project-decoupled-projects
+# org.gradle.parallel=true
+# AndroidX package structure to make it clearer which packages are bundled with the
+# Android operating system, and which are packaged with your app's APK
+# https://developer.android.com/topic/libraries/support-library/androidx-rn
+android.useAndroidX=true
+# Enables namespacing of each library's R class so that its R class includes only the
+# resources declared in the library itself and none from the library's dependencies,
+# thereby reducing the size of the R class for that library
+android.nonTransitiveRClass=true
+</file>
+
+<file path="gradle/gradle-daemon-jvm.properties">
+#This file is generated by updateDaemonJvm
+toolchainUrl.FREE_BSD.AARCH64=https\://api.foojay.io/disco/v3.0/ids/56a19bc915b9ba2eb62ba7554c61b919/redirect
+toolchainUrl.FREE_BSD.X86_64=https\://api.foojay.io/disco/v3.0/ids/ecd23fd7707c683afbcd6052998cb6a9/redirect
+toolchainUrl.LINUX.AARCH64=https\://api.foojay.io/disco/v3.0/ids/56a19bc915b9ba2eb62ba7554c61b919/redirect
+toolchainUrl.LINUX.X86_64=https\://api.foojay.io/disco/v3.0/ids/ecd23fd7707c683afbcd6052998cb6a9/redirect
+toolchainUrl.MAC_OS.AARCH64=https\://api.foojay.io/disco/v3.0/ids/e99bae143b75f9a10ead10248f02055e/redirect
+toolchainUrl.MAC_OS.X86_64=https\://api.foojay.io/disco/v3.0/ids/04e088f8677de3b384108493cc9481d0/redirect
+toolchainUrl.UNIX.AARCH64=https\://api.foojay.io/disco/v3.0/ids/56a19bc915b9ba2eb62ba7554c61b919/redirect
+toolchainUrl.UNIX.X86_64=https\://api.foojay.io/disco/v3.0/ids/ecd23fd7707c683afbcd6052998cb6a9/redirect
+toolchainUrl.WINDOWS.AARCH64=https\://api.foojay.io/disco/v3.0/ids/248ffb1098f61659502d0c09aa348294/redirect
+toolchainUrl.WINDOWS.X86_64=https\://api.foojay.io/disco/v3.0/ids/e7337738591f6120002875ec9a5cf45c/redirect
+toolchainVendor=JETBRAINS
+toolchainVersion=21
+</file>
+
+<file path="gradlew">
+#!/bin/sh
+
+#
+# Copyright © 2015 the original authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+##############################################################################
+#
+#   Gradle start up script for POSIX generated by Gradle.
+#
+#   Important for running:
+#
+#   (1) You need a POSIX-compliant shell to run this script. If your /bin/sh is
+#       noncompliant, but you have some other compliant shell such as ksh or
+#       bash, then to run this script, type that shell name before the whole
+#       command line, like:
+#
+#           ksh Gradle
+#
+#       Busybox and similar reduced shells will NOT work, because this script
+#       requires all of these POSIX shell features:
+#         * functions;
+#         * expansions «$var», «${var}», «${var:-default}», «${var+SET}»,
+#           «${var#prefix}», «${var%suffix}», and «$( cmd )»;
+#         * compound commands having a testable exit status, especially «case»;
+#         * various built-in commands including «command», «set», and «ulimit».
+#
+#   Important for patching:
+#
+#   (2) This script targets any POSIX shell, so it avoids extensions provided
+#       by Bash, Ksh, etc; in particular arrays are avoided.
+#
+#       The "traditional" practice of packing multiple parameters into a
+#       space-separated string is a well documented source of bugs and security
+#       problems, so this is (mostly) avoided, by progressively accumulating
+#       options in "$@", and eventually passing that to Java.
+#
+#       Where the inherited environment variables (DEFAULT_JVM_OPTS, JAVA_OPTS,
+#       and GRADLE_OPTS) rely on word-splitting, this is performed explicitly;
+#       see the in-line comments for details.
+#
+#       There are tweaks for specific operating systems such as AIX, CygWin,
+#       Darwin, MinGW, and NonStop.
+#
+#   (3) This script is generated from the Groovy template
+#       https://github.com/gradle/gradle/blob/HEAD/platforms/jvm/plugins-application/src/main/resources/org/gradle/api/internal/plugins/unixStartScript.txt
+#       within the Gradle project.
+#
+#       You can find Gradle at https://github.com/gradle/gradle/.
+#
+##############################################################################
+
+# Attempt to set APP_HOME
+
+# Resolve links: $0 may be a link
+app_path=$0
+
+# Need this for daisy-chained symlinks.
+while
+    APP_HOME=${app_path%"${app_path##*/}"}  # leaves a trailing /; empty if no leading path
+    [ -h "$app_path" ]
+do
+    ls=$( ls -ld "$app_path" )
+    link=${ls#*' -> '}
+    case $link in             #(
+      /*)   app_path=$link ;; #(
+      *)    app_path=$APP_HOME$link ;;
+    esac
+done
+
+# This is normally unused
+# shellcheck disable=SC2034
+APP_BASE_NAME=${0##*/}
+# Discard cd standard output in case $CDPATH is set (https://github.com/gradle/gradle/issues/25036)
+APP_HOME=$( cd -P "${APP_HOME:-./}" > /dev/null && printf '%s\n' "$PWD" ) || exit
+
+# Use the maximum available, or set MAX_FD != -1 to use that value.
+MAX_FD=maximum
+
+warn () {
+    echo "$*"
+} >&2
+
+die () {
+    echo
+    echo "$*"
+    echo
+    exit 1
+} >&2
+
+# OS specific support (must be 'true' or 'false').
+cygwin=false
+msys=false
+darwin=false
+nonstop=false
+case "$( uname )" in                #(
+  CYGWIN* )         cygwin=true  ;; #(
+  Darwin* )         darwin=true  ;; #(
+  MSYS* | MINGW* )  msys=true    ;; #(
+  NONSTOP* )        nonstop=true ;;
+esac
+
+CLASSPATH="\\\"\\\""
+
+
+# Determine the Java command to use to start the JVM.
+if [ -n "$JAVA_HOME" ] ; then
+    if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
+        # IBM's JDK on AIX uses strange locations for the executables
+        JAVACMD=$JAVA_HOME/jre/sh/java
+    else
+        JAVACMD=$JAVA_HOME/bin/java
+    fi
+    if [ ! -x "$JAVACMD" ] ; then
+        die "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME
+
+Please set the JAVA_HOME variable in your environment to match the
+location of your Java installation."
+    fi
+else
+    JAVACMD=java
+    if ! command -v java >/dev/null 2>&1
+    then
+        die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
+
+Please set the JAVA_HOME variable in your environment to match the
+location of your Java installation."
+    fi
+fi
+
+# Increase the maximum file descriptors if we can.
+if ! "$cygwin" && ! "$darwin" && ! "$nonstop" ; then
+    case $MAX_FD in #(
+      max*)
+        # In POSIX sh, ulimit -H is undefined. That's why the result is checked to see if it worked.
+        # shellcheck disable=SC2039,SC3045
+        MAX_FD=$( ulimit -H -n ) ||
+            warn "Could not query maximum file descriptor limit"
+    esac
+    case $MAX_FD in  #(
+      '' | soft) :;; #(
+      *)
+        # In POSIX sh, ulimit -n is undefined. That's why the result is checked to see if it worked.
+        # shellcheck disable=SC2039,SC3045
+        ulimit -n "$MAX_FD" ||
+            warn "Could not set maximum file descriptor limit to $MAX_FD"
+    esac
+fi
+
+# Collect all arguments for the java command, stacking in reverse order:
+#   * args from the command line
+#   * the main class name
+#   * -classpath
+#   * -D...appname settings
+#   * --module-path (only if needed)
+#   * DEFAULT_JVM_OPTS, JAVA_OPTS, and GRADLE_OPTS environment variables.
+
+# For Cygwin or MSYS, switch paths to Windows format before running java
+if "$cygwin" || "$msys" ; then
+    APP_HOME=$( cygpath --path --mixed "$APP_HOME" )
+    CLASSPATH=$( cygpath --path --mixed "$CLASSPATH" )
+
+    JAVACMD=$( cygpath --unix "$JAVACMD" )
+
+    # Now convert the arguments - kludge to limit ourselves to /bin/sh
+    for arg do
+        if
+            case $arg in                                #(
+              -*)   false ;;                            # don't mess with options #(
+              /?*)  t=${arg#/} t=/${t%%/*}              # looks like a POSIX filepath
+                    [ -e "$t" ] ;;                      #(
+              *)    false ;;
+            esac
+        then
+            arg=$( cygpath --path --ignore --mixed "$arg" )
+        fi
+        # Roll the args list around exactly as many times as the number of
+        # args, so each arg winds up back in the position where it started, but
+        # possibly modified.
+        #
+        # NB: a `for` loop captures its iteration list before it begins, so
+        # changing the positional parameters here affects neither the number of
+        # iterations, nor the values presented in `arg`.
+        shift                   # remove old arg
+        set -- "$@" "$arg"      # push replacement arg
+    done
+fi
+
+
+# Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
+DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
+
+# Collect all arguments for the java command:
+#   * DEFAULT_JVM_OPTS, JAVA_OPTS, and optsEnvironmentVar are not allowed to contain shell fragments,
+#     and any embedded shellness will be escaped.
+#   * For example: A user cannot expect ${Hostname} to be expanded, as it is an environment variable and will be
+#     treated as '${Hostname}' itself on the command line.
+
+set -- \
+        "-Dorg.gradle.appname=$APP_BASE_NAME" \
+        -classpath "$CLASSPATH" \
+        -jar "$APP_HOME/gradle/wrapper/gradle-wrapper.jar" \
+        "$@"
+
+# Stop when "xargs" is not available.
+if ! command -v xargs >/dev/null 2>&1
+then
+    die "xargs is not available"
+fi
+
+# Use "xargs" to parse quoted args.
+#
+# With -n1 it outputs one arg per line, with the quotes and backslashes removed.
+#
+# In Bash we could simply go:
+#
+#   readarray ARGS < <( xargs -n1 <<<"$var" ) &&
+#   set -- "${ARGS[@]}" "$@"
+#
+# but POSIX shell has neither arrays nor command substitution, so instead we
+# post-process each arg (as a line of input to sed) to backslash-escape any
+# character that might be a shell metacharacter, then use eval to reverse
+# that process (while maintaining the separation between arguments), and wrap
+# the whole thing up as a single "set" statement.
+#
+# This will of course break if any of these variables contains a newline or
+# an unmatched quote.
+#
+
+eval "set -- $(
+        printf '%s\n' "$DEFAULT_JVM_OPTS $JAVA_OPTS $GRADLE_OPTS" |
+        xargs -n1 |
+        sed ' s~[^-[:alnum:]+,./:=@_]~\\&~g; ' |
+        tr '\n' ' '
+    )" '"$@"'
+
+exec "$JAVACMD" "$@"
+</file>
+
+<file path="gradlew.bat">
+@rem
+@rem Copyright 2015 the original author or authors.
+@rem
+@rem Licensed under the Apache License, Version 2.0 (the "License");
+@rem you may not use this file except in compliance with the License.
+@rem You may obtain a copy of the License at
+@rem
+@rem      https://www.apache.org/licenses/LICENSE-2.0
+@rem
+@rem Unless required by applicable law or agreed to in writing, software
+@rem distributed under the License is distributed on an "AS IS" BASIS,
+@rem WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+@rem See the License for the specific language governing permissions and
+@rem limitations under the License.
+@rem
+@rem SPDX-License-Identifier: Apache-2.0
+@rem
+
+@if "%DEBUG%"=="" @echo off
+@rem ##########################################################################
+@rem
+@rem  Gradle startup script for Windows
+@rem
+@rem ##########################################################################
+
+@rem Set local scope for the variables with windows NT shell
+if "%OS%"=="Windows_NT" setlocal
+
+set DIRNAME=%~dp0
+if "%DIRNAME%"=="" set DIRNAME=.
+@rem This is normally unused
+set APP_BASE_NAME=%~n0
+set APP_HOME=%DIRNAME%
+
+@rem Resolve any "." and ".." in APP_HOME to make it shorter.
+for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi
+
+@rem Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
+set DEFAULT_JVM_OPTS="-Xmx64m" "-Xms64m"
+
+@rem Find java.exe
+if defined JAVA_HOME goto findJavaFromJavaHome
+
+set JAVA_EXE=java.exe
+%JAVA_EXE% -version >NUL 2>&1
+if %ERRORLEVEL% equ 0 goto execute
+
+echo. 1>&2
+echo ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH. 1>&2
+echo. 1>&2
+echo Please set the JAVA_HOME variable in your environment to match the 1>&2
+echo location of your Java installation. 1>&2
+
+goto fail
+
+:findJavaFromJavaHome
+set JAVA_HOME=%JAVA_HOME:"=%
+set JAVA_EXE=%JAVA_HOME%/bin/java.exe
+
+if exist "%JAVA_EXE%" goto execute
+
+echo. 1>&2
+echo ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME% 1>&2
+echo. 1>&2
+echo Please set the JAVA_HOME variable in your environment to match the 1>&2
+echo location of your Java installation. 1>&2
+
+goto fail
+
+:execute
+@rem Setup the command line
+
+set CLASSPATH=
+
+
+@rem Execute Gradle
+"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" -jar "%APP_HOME%\gradle\wrapper\gradle-wrapper.jar" %*
+
+:end
+@rem End local scope for the variables with windows NT shell
+if %ERRORLEVEL% equ 0 goto mainEnd
+
+:fail
+rem Set variable GRADLE_EXIT_CONSOLE if you need the _script_ return code instead of
+rem the _cmd.exe /c_ return code!
+set EXIT_CODE=%ERRORLEVEL%
+if %EXIT_CODE% equ 0 set EXIT_CODE=1
+if not ""=="%GRADLE_EXIT_CONSOLE%" exit %EXIT_CODE%
+exit /b %EXIT_CODE%
+
+:mainEnd
+if "%OS%"=="Windows_NT" endlocal
+
+:omega
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/location/LocationBroadcaster.java">
+package com.example.rescuelink.location;
+
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+
+// --- CHANGED: Import the unified mesh tools ---
+import com.example.rescuelink.MeshPacket;
+import com.example.rescuelink.TransportBroker;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+
+public class LocationBroadcaster {
+    private static final String TAG = "LocBroadcast";
+    private static final long BROADCAST_INTERVAL = 5000; // 5 seconds for better tracking
+
+    public interface StatusProvider {
+        int getBatteryLevel();
+        boolean isSosActive();
+    }
+
+    // --- CHANGED: Use TransportBroker instead of MeshBroker ---
+    private final TransportBroker broker;
+    private final String myMeshId;
+    private final RescueLinkLocationManager locationManager;
+    private StatusProvider statusProvider;
+
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private boolean isRunning = false;
+
+    // --- CHANGED: Constructor accepts TransportBroker ---
+    public LocationBroadcaster(TransportBroker broker, String myMeshId, RescueLinkLocationManager locationManager) {
+        this.broker = broker;
+        this.myMeshId = myMeshId;
+        this.locationManager = locationManager;
+    }
+
+    public void setStatusProvider(StatusProvider provider) {
+        this.statusProvider = provider;
+    }
+
+    private final Runnable broadcastRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!isRunning) return;
+
+            if (locationManager.hasValidLocation()) {
+                int battery = (statusProvider != null) ? statusProvider.getBatteryLevel() : 100;
+                boolean sos = (statusProvider != null) && statusProvider.isSosActive();
+
+                // 1. Construct the payload string
+                // Format: L|MeshID|Lat|Lon|Accuracy|Battery|isSOS
+                // (Using Locale.US to ensure decimals are dots, not commas!)
+                String payloadStr = String.format(Locale.US, "L|%s|%.6f|%.6f|%.1f|%d|%b",
+                        myMeshId,
+                        locationManager.getLatitude(),
+                        locationManager.getLongitude(),
+                        locationManager.getAccuracy(),
+                        battery,
+                        sos
+                );
+
+                Log.d(TAG, "Broadcasting Location: " + payloadStr + " (Acc: " + locationManager.getAccuracy() + "m)");
+
+                // 2. CHANGED: Wrap the string securely in a MeshPacket!
+                MeshPacket locPacket = new MeshPacket(
+                        'L',
+                        myMeshId,
+                        MeshPacket.BROADCAST_ID,
+                        payloadStr.getBytes(StandardCharsets.UTF_8)
+                );
+
+                // 3. CHANGED: Send via the main unified radio pipe
+                if (broker != null) {
+                    broker.send(locPacket);
+                }
+            } else {
+                Log.d(TAG, "Location not ready yet, skipping broadcast...");
+            }
+
+            // Loop again in 5 seconds
+            handler.postDelayed(this, BROADCAST_INTERVAL);
+        }
+    };
+
+    public void start() {
+        if (isRunning) return;
+        isRunning = true;
+        handler.post(broadcastRunnable);
+        Log.d(TAG, "Location Broadcasting Started");
+    }
+
+    public void stop() {
+        isRunning = false;
+        handler.removeCallbacks(broadcastRunnable);
+        Log.d(TAG, "Location Broadcasting Stopped");
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/location/RescueLinkLocationManager.java">
+package com.example.rescuelink.location;
+
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.os.Looper;
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
+
+public class RescueLinkLocationManager {
+
+    public interface LocationListener {
+        void onLocationUpdated(double latitude, double longitude, float accuracy);
+        void onLocationUnavailable();
+    }
+
+    private static final String TAG = "RLLocation";
+    
+    // Increased frequency for better accuracy and responsiveness
+    private static final long UPDATE_INTERVAL_MS     = 2000; 
+    private static final long FASTEST_INTERVAL_MS    = 1000;
+    private static final float MIN_DISPLACEMENT_M    = 0.0f; // Update even on small movements
+
+    private final Context context;
+    private final FusedLocationProviderClient fusedClient;
+    private LocationCallback locationCallback;
+    private LocationListener listener;
+
+    private double lastLatitude  = 0.0;
+    private double lastLongitude = 0.0;
+    private float  lastAccuracy  = 0.0f;
+    private long   lastUpdateTime = 0;
+    private boolean hasValidLocation = false;
+
+    public RescueLinkLocationManager(Context context) {
+        this.context     = context.getApplicationContext();
+        this.fusedClient = LocationServices.getFusedLocationProviderClient(context);
+    }
+
+    public void setLocationListener(LocationListener listener) {
+        this.listener = listener;
+    }
+
+    public void startUpdates() {
+        if (!hasPermission()) {
+            Log.w(TAG, "Location permission not granted");
+            if (listener != null) listener.onLocationUnavailable();
+            return;
+        }
+
+        // Using PRIORITY_HIGH_ACCURACY to force GPS usage
+        LocationRequest request = new LocationRequest.Builder(UPDATE_INTERVAL_MS)
+                .setMinUpdateIntervalMillis(FASTEST_INTERVAL_MS)
+                .setMinUpdateDistanceMeters(MIN_DISPLACEMENT_M)
+                .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                .setWaitForAccurateLocation(false) // Wait for a better fix if needed
+                .build();
+
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(@NonNull LocationResult result) {
+                Location location = result.getLastLocation();
+                if (location == null) return;
+
+                // Filter out very inaccurate locations (e.g. > 100m) if we have a choice
+                // but for now, we'll just report what we have and let the UI show accuracy.
+                lastLatitude    = location.getLatitude();
+                lastLongitude   = location.getLongitude();
+                lastAccuracy    = location.getAccuracy();
+                lastUpdateTime  = System.currentTimeMillis();
+                hasValidLocation = true;
+
+                Log.d(TAG, "Location Update: " + lastLatitude + "," + lastLongitude + " Acc: " + lastAccuracy);
+
+                if (listener != null) {
+                    listener.onLocationUpdated(lastLatitude, lastLongitude, lastAccuracy);
+                }
+            }
+        };
+
+        try {
+            fusedClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper());
+            
+            // Also try to get the last known location quickly, but only if it's fresh
+            fusedClient.getLastLocation().addOnSuccessListener(location -> {
+                if (location != null && !hasValidLocation) {
+                    long age = System.currentTimeMillis() - location.getTime();
+                    if (age < 60000) { // Only use if less than 1 minute old
+                        lastLatitude    = location.getLatitude();
+                        lastLongitude   = location.getLongitude();
+                        lastAccuracy    = location.getAccuracy();
+                        hasValidLocation = true;
+                        if (listener != null) {
+                            listener.onLocationUpdated(lastLatitude, lastLongitude, lastAccuracy);
+                        }
+                    }
+                }
+            });
+        } catch (SecurityException e) {
+            Log.e(TAG, "Security exception requesting location: " + e.getMessage());
+        }
+    }
+
+    public void stopUpdates() {
+        if (locationCallback != null) {
+            fusedClient.removeLocationUpdates(locationCallback);
+            locationCallback = null;
+        }
+    }
+
+    public double getLatitude()       { return lastLatitude; }
+    public double getLongitude()      { return lastLongitude; }
+    public float  getAccuracy()       { return lastAccuracy; }
+    public boolean hasValidLocation() { return hasValidLocation; }
+    public long   getLastUpdateTime() { return lastUpdateTime; }
+
+    public long getAgeMs() {
+        if (lastUpdateTime == 0) return Long.MAX_VALUE;
+        return System.currentTimeMillis() - lastUpdateTime;
+    }
+
+    public boolean isFresh() {
+        return hasValidLocation && getAgeMs() < 30000;
+    }
+
+    private boolean hasPermission() {
+        return ActivityCompat.checkSelfPermission(context,
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/map/NodeLineManager.java">
+package com.example.rescuelink.map;
+
+import android.location.Location;
+
+import com.example.rescuelink.location.NodeLocationStore;
+
+import org.maplibre.android.maps.MapLibreMap;
+import org.maplibre.android.style.layers.LineLayer;
+import org.maplibre.android.style.layers.PropertyFactory;
+import org.maplibre.android.style.layers.SymbolLayer;
+import org.maplibre.android.style.sources.GeoJsonSource;
+
+import java.util.List;
+
+public class NodeLineManager {
+
+    private static final String SOURCE_ID = "node-lines-source";
+    private static final String LINE_LAYER_ID  = "node-lines-layer";
+    private static final String LABEL_LAYER_ID = "node-distance-labels";
+
+    private final MapLibreMap map;
+    private GeoJsonSource lineSource;
+
+    public NodeLineManager(MapLibreMap map) {
+        this.map = map;
+        setupLayers();
+    }
+
+    private void setupLayers() {
+        map.getStyle(style -> {
+            // GeoJSON source — we update this with fresh data every refresh cycle
+            lineSource = new GeoJsonSource(SOURCE_ID, buildEmptyGeoJson());
+            style.addSource(lineSource);
+
+            // Line layer — thin white line, non-distracting
+            LineLayer lineLayer = new LineLayer(LINE_LAYER_ID, SOURCE_ID);
+            lineLayer.setProperties(
+                    PropertyFactory.lineColor("#4A90E2"), // Soft Blue
+                    PropertyFactory.lineWidth(2.0f),
+                    PropertyFactory.lineOpacity(0.5f)
+            );
+            style.addLayer(lineLayer);
+
+            // Distance label layer — small text at midpoint of each line
+            SymbolLayer labelLayer = new SymbolLayer(LABEL_LAYER_ID, SOURCE_ID);
+            labelLayer.setProperties(
+                    PropertyFactory.textField(org.maplibre.android.style.expressions.Expression.get("distance")),
+                    //PropertyFactory.textField("{distance}"),
+                    PropertyFactory.textSize(14f),
+                    PropertyFactory.textColor("#FFFFFF"),
+                    PropertyFactory.textHaloColor("#000000"),
+                    PropertyFactory.textHaloWidth(1.5f),
+                    PropertyFactory.textOffset(new Float[]{0f, -0.7f})
+            );
+            style.addLayer(labelLayer);
+        });
+    }
+
+    // Call this every time node positions update
+    public void updateLines(double myLat, double myLon, List<NodeLocationStore.NodeInfo> nodes) {
+        if (lineSource == null) return;
+
+        StringBuilder geoJson = new StringBuilder();
+        geoJson.append("{\"type\":\"FeatureCollection\",\"features\":[");
+
+        boolean first = true;
+        float[] results = new float[1]; // Used for distance calculation
+
+        for (NodeLocationStore.NodeInfo node : nodes) {
+            if (node.latitude == 0 && node.longitude == 0) continue;
+            if (!node.isOnline()) continue;
+
+            // Calculate highly accurate distance
+            Location.distanceBetween(myLat, myLon, node.latitude, node.longitude, results);
+            double distanceMeters = results[0];
+
+            String distanceLabel = formatDistance(distanceMeters);
+
+            // Midpoint for label placement
+            double midLat = (myLat + node.latitude) / 2.0;
+            double midLon = (myLon + node.longitude) / 2.0;
+
+            if (!first) geoJson.append(",");
+            first = false;
+
+            // Line feature
+            geoJson.append("{\"type\":\"Feature\",")
+                    .append("\"properties\":{\"distance\":\"")
+                    .append(distanceLabel).append("\"},")
+                    .append("\"geometry\":{\"type\":\"LineString\",")
+                    .append("\"coordinates\":[[")
+                    .append(myLon).append(",").append(myLat).append("],[")
+                    .append(node.longitude).append(",").append(node.latitude)
+                    .append("]]}}");
+
+            // Label point at midpoint
+            geoJson.append(",{\"type\":\"Feature\",")
+                    .append("\"properties\":{\"distance\":\"")
+                    .append(distanceLabel).append("\"},")
+                    .append("\"geometry\":{\"type\":\"Point\",")
+                    .append("\"coordinates\":[")
+                    .append(midLon).append(",").append(midLat)
+                    .append("]}}");
+        }
+
+        geoJson.append("]}");
+        lineSource.setGeoJson(geoJson.toString());
+    }
+
+    private String formatDistance(double meters) {
+        if (meters < 1000) {
+            return Math.round(meters) + "m";
+        } else {
+            return String.format("%.1fkm", meters / 1000.0);
+        }
+    }
+
+    private String buildEmptyGeoJson() {
+        return "{\"type\":\"FeatureCollection\",\"features\":[]}";
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/NearbyMeshManager.java">
+package com.example.rescuelink;
+
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+import androidx.annotation.NonNull;
+
+import com.google.android.gms.nearby.Nearby;
+import com.google.android.gms.nearby.connection.AdvertisingOptions;
+import com.google.android.gms.nearby.connection.ConnectionInfo;
+import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback;
+import com.google.android.gms.nearby.connection.ConnectionResolution;
+import com.google.android.gms.nearby.connection.ConnectionsClient;
+import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo;
+import com.google.android.gms.nearby.connection.DiscoveryOptions;
+import com.google.android.gms.nearby.connection.EndpointDiscoveryCallback;
+import com.google.android.gms.nearby.connection.Payload;
+import com.google.android.gms.nearby.connection.PayloadCallback;
+import com.google.android.gms.nearby.connection.PayloadTransferUpdate;
+import com.google.android.gms.nearby.connection.Strategy;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class NearbyMeshManager {
+
+    public interface PacketListener {
+        void onPacketReceived(byte[] data, String endpointId);
+    }
+
+    private static final String TAG = "NearbyMesh";
+    private static final String SERVICE_ID = "com.example.rescuelink.SERVICE";
+
+    // --- Backoff Constants for Connection Retry ---
+    private static final long BASE_BACKOFF_MS = 1000;
+    private static final long MAX_BACKOFF_MS = 16000;
+    private static final int MAX_RETRY_COUNT = 5;
+
+    private final MainActivity activity;
+    private final ConnectionsClient connectionsClient;
+
+    private PacketListener listener;
+    private boolean isHost = false;
+    private boolean isConnected = false;
+
+    // --- State Tracking Flags ---
+    private boolean isDiscovering = false;
+    private boolean isAdvertising = false;
+    private int retryCount = 0;
+
+    // --- Thread-Safe Collections ---
+    private final Map<String, String> connectedDevices = new ConcurrentHashMap<>();
+    private final Map<String, String> routingTable = new ConcurrentHashMap<>();
+    private final Set<String> pendingConnections = ConcurrentHashMap.newKeySet();
+
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private Runnable hostElectionRunnable;
+
+    public NearbyMeshManager(MainActivity activity) {
+        this.activity = activity;
+        this.connectionsClient = Nearby.getConnectionsClient(activity);
+    }
+
+    public void setPacketListener(PacketListener listener) {
+        this.listener = listener;
+    }
+
+    // ==========================================
+    //      NETWORK START & TIMERS
+    // ==========================================
+
+    public void startAutonomousNetwork() {
+        if (isConnected) return;
+        retryCount = 0;
+        startScanPhase();
+    }
+
+    private void startScanPhase() {
+        isHost = false;
+        activity.setStatusText("Status: Scanning Mesh...");
+        startDiscovery();
+
+        if (hostElectionRunnable != null) {
+            handler.removeCallbacks(hostElectionRunnable);
+        }
+
+        long baseWait = 4000;
+        long jitter = new Random().nextInt(3000);
+        long meshBias = (activity.myMeshId != null) ? (activity.myMeshId.hashCode() & 0x7FFFFFFF) % 2000 : 0;
+        long totalWait = baseWait + jitter + meshBias;
+
+        hostElectionRunnable = () -> {
+            if (!isConnected) {
+                activity.log("AUTO: Region empty. Electing self as Host after " + totalWait + "ms");
+                stopDiscovery();
+                startAdvertising();
+            }
+        };
+        handler.postDelayed(hostElectionRunnable, totalWait);
+    }
+
+    private void startDiscovery() {
+        if (isDiscovering) return;
+        try {
+            DiscoveryOptions options = new DiscoveryOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build();
+            connectionsClient.startDiscovery(SERVICE_ID, endpointDiscoveryCallback, options)
+                    .addOnSuccessListener(unused -> isDiscovering = true)
+                    .addOnFailureListener(e -> {
+                        Log.w(TAG, "Discovery failed to start: " + e.getMessage());
+                        scheduleRetry();
+                    });
+        } catch (Exception e) {
+            Log.e(TAG, "startDiscovery exception: " + e.getMessage());
+        }
+    }
+
+    private void stopDiscovery() {
+        if (!isDiscovering) return;
+        try {
+            connectionsClient.stopDiscovery();
+        } catch (Exception e) {
+            Log.w(TAG, "stopDiscovery exception: " + e.getMessage());
+        }
+        isDiscovering = false;
+    }
+
+    private void startAdvertising() {
+        if (isAdvertising) return;
+        try {
+            AdvertisingOptions options = new AdvertisingOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build();
+            connectionsClient.startAdvertising(activity.USER_NICKNAME, SERVICE_ID, connectionLifecycleCallback, options)
+                    .addOnSuccessListener(unused -> {
+                        isHost = true;
+                        isAdvertising = true;
+                        activity.setStatusText("Status: Mesh Host");
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.w(TAG, "Advertising failed to start: " + e.getMessage());
+                        isAdvertising = false;
+                        scheduleRetry();
+                    });
+        } catch (Exception e) {
+            Log.e(TAG, "startAdvertising exception: " + e.getMessage());
+        }
+    }
+
+    // ==========================================
+    //      RETRY LOGIC (EXPONENTIAL BACKOFF)
+    // ==========================================
+
+    private void scheduleRetry() {
+        if (retryCount >= MAX_RETRY_COUNT) {
+            Log.w(TAG, "Max retries reached — resetting completely");
+            retryCount = 0;
+            handler.postDelayed(this::fullReset, 3000);
+            return;
+        }
+        long delay = Math.min(BASE_BACKOFF_MS * (1L << retryCount), MAX_BACKOFF_MS);
+        retryCount++;
+        activity.setStatusText("Status: Reconnecting...");
+        handler.postDelayed(this::startScanPhase, delay);
+    }
+
+    private void fullReset() {
+        disconnectAll();
+        handler.postDelayed(this::startScanPhase, 2000);
+    }
+
+    // ==========================================
+    //      CONNECTION CALLBACKS
+    // ==========================================
+
+    private final EndpointDiscoveryCallback endpointDiscoveryCallback = new EndpointDiscoveryCallback() {
+        @Override
+        public void onEndpointFound(@NonNull String endpointId, @NonNull DiscoveredEndpointInfo info) {
+            activity.log("Found Node: " + info.getEndpointName());
+
+            if (pendingConnections.contains(endpointId) || connectedDevices.containsKey(endpointId)) {
+                return;
+            }
+
+            if (hostElectionRunnable != null) {
+                handler.removeCallbacks(hostElectionRunnable);
+            }
+
+            // [CHANGE APPLIED]: Discovery remains running to build the mesh!
+            pendingConnections.add(endpointId);
+
+            connectionsClient.requestConnection(activity.USER_NICKNAME, endpointId, connectionLifecycleCallback)
+                    .addOnFailureListener(e -> {
+                        pendingConnections.remove(endpointId);
+                        Log.w(TAG, "requestConnection failed: " + e.getMessage());
+                        scheduleRetry();
+                    });
+        }
+        @Override
+        public void onEndpointLost(@NonNull String endpointId) {
+            pendingConnections.remove(endpointId);
+        }
+    };
+
+    private final ConnectionLifecycleCallback connectionLifecycleCallback = new ConnectionLifecycleCallback() {
+        @Override
+        public void onConnectionInitiated(@NonNull String endpointId, @NonNull ConnectionInfo info) {
+            connectedDevices.put(endpointId, info.getEndpointName());
+            try {
+                connectionsClient.acceptConnection(endpointId, payloadCallback)
+                        .addOnFailureListener(e -> connectedDevices.remove(endpointId));
+            } catch (Exception e) {
+                connectedDevices.remove(endpointId);
+            }
+        }
+
+        @Override
+        public void onConnectionResult(@NonNull String endpointId, @NonNull ConnectionResolution result) {
+            pendingConnections.remove(endpointId);
+            if (result.getStatus().isSuccess()) {
+                isConnected = true;
+                retryCount = 0;
+                activity.log(">>> Linked (Nearby): " + connectedDevices.get(endpointId));
+
+                // [CHANGE APPLIED]: Keep both advertising and discovery alive
+                if (!isAdvertising) startAdvertising();
+                if (!isDiscovering) startDiscovery();
+            } else {
+                connectedDevices.remove(endpointId);
+                if (!isConnected) {
+                    scheduleRetry();
+                }
+            }
+        }
+
+        @Override
+        public void onDisconnected(@NonNull String endpointId) {
+            connectedDevices.remove(endpointId);
+            routingTable.values().remove(endpointId);
+            if (connectedDevices.isEmpty()) {
+                isConnected = false;
+                activity.log("Mesh link lost — re-scanning");
+                // [CHANGE APPLIED]: Keep advertising active during the rescan
+                handler.postDelayed(() -> {
+                    if (!isDiscovering) startDiscovery();
+                }, 1500);
+            }
+        }
+    };
+
+    // ==========================================
+    //      DATA TRANSMISSION
+    // ==========================================
+
+    private final PayloadCallback payloadCallback = new PayloadCallback() {
+        @Override
+        public void onPayloadReceived(@NonNull String endpointId, @NonNull Payload payload) {
+            if (payload.getType() == Payload.Type.BYTES && listener != null) {
+                byte[] data = payload.asBytes();
+                if (data != null && data.length > 0) {
+                    listener.onPacketReceived(data, endpointId);
+                }
+            }
+        }
+        @Override public void onPayloadTransferUpdate(@NonNull String id, @NonNull PayloadTransferUpdate update) {}
+    };
+
+    public void sendToAll(byte[] data) {
+        if (data == null || connectedDevices.isEmpty()) return;
+        try {
+            connectionsClient.sendPayload(new ArrayList<>(connectedDevices.keySet()), Payload.fromBytes(data));
+        } catch (Exception e) {
+            Log.w(TAG, "sendToAll failed: " + e.getMessage());
+        }
+    }
+
+    public void sendToAllExcept(String excludedId, byte[] data) {
+        if (data == null) return;
+        List<String> targets = new ArrayList<>();
+        for (String id : connectedDevices.keySet()) {
+            if (!id.equals(excludedId)) targets.add(id);
+        }
+        if (!targets.isEmpty()) {
+            try {
+                connectionsClient.sendPayload(targets, Payload.fromBytes(data));
+            } catch (Exception e) {
+                Log.w(TAG, "sendToAllExcept failed: " + e.getMessage());
+            }
+        }
+    }
+
+    public void sendTo(String endpointId, byte[] data) {
+        if (data == null || !connectedDevices.containsKey(endpointId)) return;
+        try {
+            connectionsClient.sendPayload(endpointId, Payload.fromBytes(data));
+        } catch (Exception e) {
+            Log.w(TAG, "sendTo failed: " + e.getMessage());
+        }
+    }
+
+    // ==========================================
+    //      ROUTING & STATE
+    // ==========================================
+
+    public void updateRoutingTable(String originMeshId, String viaEndpointId) {
+        if (originMeshId != null && viaEndpointId != null) {
+            routingTable.put(originMeshId, viaEndpointId);
+        }
+    }
+
+    public String getNextHop(String targetMeshId) {
+        return routingTable.get(targetMeshId);
+    }
+
+    public void disconnectAll() {
+        if (hostElectionRunnable != null) {
+            handler.removeCallbacks(hostElectionRunnable);
+        }
+        try { connectionsClient.stopAllEndpoints(); } catch (Exception ignored) {}
+        try { connectionsClient.stopAdvertising(); } catch (Exception ignored) {}
+        try { connectionsClient.stopDiscovery(); } catch (Exception ignored) {}
+
+        connectedDevices.clear();
+        routingTable.clear();
+        pendingConnections.clear();
+
+        isConnected = false;
+        isHost = false;
+        isDiscovering = false;
+        isAdvertising = false;
+    }
+
+    public boolean isConnected() { return isConnected; }
+    public boolean isHost() { return isHost; }
+    public int getPeerCount() { return connectedDevices.size(); }
+}
+</file>
+
+<file path="app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml">
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background"/>
+    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+    <monochrome android:drawable="@mipmap/ic_launcher_monochrome"/>
+</adaptive-icon>
+</file>
+
+<file path="app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml">
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background"/>
+    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+    <monochrome android:drawable="@mipmap/ic_launcher_monochrome"/>
+</adaptive-icon>
+</file>
+
+<file path="gradle/libs.versions.toml">
+[versions]
+agp = "9.1.0"
+junit = "4.13.2"
+junitVersion = "1.1.5"
+espressoCore = "3.5.1"
+appcompat = "1.6.1"
+material = "1.10.0"
+activity = "1.8.0"
+constraintlayout = "2.1.4"
+
+[libraries]
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+</file>
+
+<file path="gradle/wrapper/gradle-wrapper.properties">
+#Thu Feb 05 21:59:45 IST 2026
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionSha256Sum=b266d5ff6b90eada6dc3b20cb090e3731302e553a27c5d3e4df1f0d76beaff06
+distributionUrl=https\://services.gradle.org/distributions/gradle-9.3.1-bin.zip
+networkTimeout=10000
+validateDistributionUrl=true
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+</file>
+
+<file path="app/build.gradle">
+plugins {
+    alias(libs.plugins.android.application)
+}
+
+android {
+    namespace 'com.example.rescuelink'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.example.rescuelink"
+        minSdk 29
+        targetSdk 36
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+
+dependencies {
+    implementation libs.appcompat
+    implementation libs.material
+    implementation libs.activity
+    implementation libs.constraintlayout
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+    implementation 'com.google.android.gms:play-services-nearby:19.0.0'
+    implementation 'org.maplibre.gl:android-sdk:11.0.0'
+    implementation 'org.maplibre.gl:android-plugin-annotation-v9:3.0.0'
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
+}
+</file>
+
+<file path="app/src/main/AndroidManifest.xml">
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.rescuelink">
+
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.INTERNET"/> ```
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+        tools:targetApi="31">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <service
+            android:name=".MeshForegroundService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice|microphone" />
+        <activity android:name=".map.MapActivity"
+            android:label="Node Map"
+            android:exported="false"/>
+    </application>
+</manifest>
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/map/MapUIManager.java">
+package com.example.rescuelink.map;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.View;
+import android.widget.Button;
+import android.widget.Toast;
+
+import com.example.rescuelink.R;
+import com.example.rescuelink.location.NodeLocationStore;
+import com.example.rescuelink.location.RescueLinkLocationManager;
+
+import org.maplibre.android.MapLibre;
+import org.maplibre.android.camera.CameraPosition;
+import org.maplibre.android.geometry.LatLng;
+import org.maplibre.android.maps.MapLibreMap;
+import org.maplibre.android.maps.MapView;
+import org.maplibre.android.plugins.annotation.Circle;
+import org.maplibre.android.plugins.annotation.CircleManager;
+import org.maplibre.android.plugins.annotation.CircleOptions;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.ArrayList;
+
+public class MapUIManager {
+
+    private final Activity activity;
+    private final NodeLocationStore nodeStore;
+    private final RescueLinkLocationManager locationManager;
+
+    private MapView mapView;
+    private View mapContainer;
+    private Button btnToggleMap;
+    private MapLibreMap mapLibreMap;
+
+    // --- DRAWING MANAGERS ---
+    private CircleManager circleManager;
+    private NodeLineManager nodeLineManager; // <--- Claude's new manager
+
+    private final Map<String, Circle> nodeCircles = new ConcurrentHashMap<>();
+    private boolean isMapVisible = false;
+    private boolean isMapLoaded = false;
+
+    private static final String OFFLINE_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
+
+    public MapUIManager(Activity activity, NodeLocationStore nodeStore, RescueLinkLocationManager locManager) {
+        this.activity = activity;
+        this.nodeStore = nodeStore;
+        this.locationManager = locManager;
+    }
+
+    public void init(Bundle savedInstanceState) {
+        mapContainer = activity.findViewById(R.id.mapContainer);
+        mapView = activity.findViewById(R.id.mapView);
+        btnToggleMap = activity.findViewById(R.id.btnToggleMap);
+
+        mapContainer.post(() -> mapContainer.setTranslationY(mapContainer.getHeight()));
+        mapContainer.setVisibility(View.VISIBLE);
+
+        mapView.onCreate(savedInstanceState);
+        mapView.getMapAsync(map -> {
+            mapLibreMap = map;
+            map.setStyle(OFFLINE_STYLE_URL, style -> {
+
+                // Initialize both managers
+                circleManager = new CircleManager(mapView, map, style);
+                nodeLineManager = new NodeLineManager(map); // <--- Setup the lines
+
+                isMapLoaded = true;
+
+                // Tap a dot to see battery/status
+                circleManager.addClickListener(circle -> {
+                    for (NodeLocationStore.NodeInfo node : nodeStore.getAllNodes()) {
+                        if (node.latitude == circle.getLatLng().getLatitude() &&
+                                node.longitude == circle.getLatLng().getLongitude()) {
+                            String status = MapStyleHelper.getNodeStatusText(node);
+                            Toast.makeText(activity, "Node " + node.meshId + "\n" + status, Toast.LENGTH_LONG).show();
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+
+                startDrawingLoop();
+                // downloadOfflineMapRegion(); // Uncomment if you have the offline logic ready
+            });
+        });
+
+        btnToggleMap.setOnClickListener(v -> toggleMapVisibility());
+    }
+
+    private void toggleMapVisibility() {
+        if (!isMapLoaded) return;
+        float targetY = isMapVisible ? mapContainer.getHeight() : 0;
+        mapContainer.animate()
+                .translationY(targetY)
+                .setDuration(300)
+                .withStartAction(() -> { if (!isMapVisible) btnToggleMap.setText("🔽 Close Map"); })
+                .withEndAction(() -> {
+                    if (isMapVisible) btnToggleMap.setText("🗺 Map");
+                    isMapVisible = !isMapVisible;
+                }).start();
+    }
+
+    // [CHANGE APPLIED]: Field-level handler to prevent object creation loop
+    private final Handler mapRefreshHandler = new Handler(Looper.getMainLooper());
+    private final Runnable mapRefreshRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (isMapVisible && mapLibreMap != null && circleManager != null) {
+                refreshMap();
+            }
+            mapRefreshHandler.postDelayed(this, 3000);
+        }
+    };
+
+    private void startDrawingLoop() {
+        mapRefreshHandler.postDelayed(mapRefreshRunnable, 3000);
+    }
+
+    private void refreshMap() {
+        try {
+            if (locationManager == null || !locationManager.hasValidLocation()) return;
+
+            double myLat = locationManager.getLatitude();
+            double myLon = locationManager.getLongitude();
+
+            if (myLat == 0.0 && myLon == 0.0) return;
+            LatLng myPos = new LatLng(myLat, myLon);
+
+            Circle myCircle = nodeCircles.get("__me__");
+            if (myCircle != null) {
+                myCircle.setLatLng(myPos);
+                circleManager.update(myCircle);
+            } else {
+                CircleOptions options = new CircleOptions()
+                        .withLatLng(myPos).withCircleRadius(10f)
+                        .withCircleColor(MapStyleHelper.OWN_NODE_COLOR)
+                        .withCircleStrokeWidth(2f).withCircleStrokeColor("#FFFFFF");
+                nodeCircles.put("__me__", circleManager.create(options));
+                mapLibreMap.setCameraPosition(new CameraPosition.Builder().target(myPos).zoom(15).build());
+            }
+
+            if (nodeStore == null) return;
+            for (NodeLocationStore.NodeInfo node : nodeStore.getAllNodes()) {
+                if (node.latitude == 0.0 && node.longitude == 0.0) continue;
+                LatLng theirPos = new LatLng(node.latitude, node.longitude);
+                Circle existingNode = nodeCircles.get(node.meshId);
+                if (existingNode != null) {
+                    existingNode.setLatLng(theirPos);
+                    existingNode.setCircleColor(MapStyleHelper.getNodeColor(node));
+                    existingNode.setCircleRadius(node.isSosActive ? 16f : 10f);
+                    circleManager.update(existingNode);
+                } else {
+                    CircleOptions options = new CircleOptions()
+                            .withLatLng(theirPos).withCircleRadius(node.isSosActive ? 16f : 10f)
+                            .withCircleColor(MapStyleHelper.getNodeColor(node))
+                            .withCircleStrokeWidth(1.5f).withCircleStrokeColor("#FFFFFF");
+                    nodeCircles.put(node.meshId, circleManager.create(options));
+                }
+            }
+
+            if (nodeLineManager != null) {
+                nodeLineManager.updateLines(myLat, myLon, nodeStore.getAllNodes());
+            }
+
+            // [CHANGE APPLIED]: Prune dead nodes from the map
+            Set<String> activeIds = new HashSet<>();
+            activeIds.add("__me__");
+            for (NodeLocationStore.NodeInfo node : nodeStore.getAllNodes()) {
+                activeIds.add(node.meshId);
+            }
+            for (String id : new ArrayList<>(nodeCircles.keySet())) {
+                if (!activeIds.contains(id)) {
+                    Circle stale = nodeCircles.remove(id);
+                    if (stale != null) circleManager.delete(stale);
+                }
+            }
+
+        } catch (Exception e) {
+            android.util.Log.e("MapUIManager", "Silent Map Crash Prevented: " + e.getMessage());
+        }
+    }
+
+    // --- Lifecycle Pass-throughs ---
+    public void onStart() { if (mapView != null) mapView.onStart(); }
+    public void onResume() { if (mapView != null) mapView.onResume(); }
+    public void onPause() { if (mapView != null) mapView.onPause(); }
+    public void onStop() { if (mapView != null) mapView.onStop(); }
+    public void onDestroy() { if (mapView != null) mapView.onDestroy(); }
+    public void onSaveInstanceState(Bundle outState) { if (mapView != null) mapView.onSaveInstanceState(outState); }
+}
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/MeshPacket.java">
+package com.example.rescuelink;
+
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+
+public class MeshPacket {
+    public static final int HEADER_SIZE = 19;
+    public static final byte TRANSPORT_NEARBY  = 0x01;
+    public static final byte TRANSPORT_HOTSPOT = 0x02;
+    public static final byte TRANSPORT_BOTH    = 0x03;
+    public static final String BROADCAST_ID    = "FFFF";
+
+    private static final java.util.concurrent.atomic.AtomicLong sequenceCounter
+            = new java.util.concurrent.atomic.AtomicLong(0);
+
+    public final char tag;
+    public final String originId;
+    public final String targetId;
+    public final long sequence;
+    public int ttl;
+    public byte transport;
+    public final byte[] payload;
+
+    public MeshPacket(char tag, String originId, String targetId, long sequence, int ttl, byte transport, byte[] payload) {
+        this.tag = tag;
+        this.originId = originId;
+        this.targetId = targetId;
+        this.sequence = sequence;
+        this.ttl = ttl;
+        this.transport = transport;
+        this.payload = payload;
+    }
+
+    public MeshPacket(char tag, String originId, String targetId, byte[] payload) {
+        this.tag = tag;
+        this.originId = originId;
+        this.targetId = targetId;
+        this.sequence = sequenceCounter.incrementAndGet();
+        this.ttl = 6;
+        this.transport = TRANSPORT_BOTH;
+        this.payload = payload;
+    }
+
+    public static MeshPacket parse(byte[] data) {
+        if (data == null || data.length < HEADER_SIZE) return null;
+        ByteBuffer bb = ByteBuffer.wrap(data);
+        char tag         = (char) bb.get();
+        byte[] orig      = new byte[4]; bb.get(orig);
+        byte[] targ      = new byte[4]; bb.get(targ);
+        long seq         = bb.getLong();
+        int ttl          = bb.get() & 0xFF;
+        byte transport   = bb.get();
+        byte[] payload   = new byte[data.length - HEADER_SIZE];
+        bb.get(payload);
+        return new MeshPacket(tag,
+                new String(orig, StandardCharsets.US_ASCII),
+                new String(targ, StandardCharsets.US_ASCII),
+                seq, ttl, transport, payload);
+    }
+
+    public byte[] toBytesWithDecrementedTtlAndPayload(byte[] newPayload) {
+        ByteBuffer bb = ByteBuffer.allocate(HEADER_SIZE + newPayload.length);
+        bb.put((byte) tag);
+        bb.put(padId(originId));
+        bb.put(padId(targetId));
+        bb.putLong(sequence);
+        bb.put((byte) Math.max(0, ttl - 1)); // decremented TTL
+        bb.put(transport);
+        bb.put(newPayload);
+        return bb.array();
+    }
+
+    public byte[] toBytes() {
+        ByteBuffer bb = ByteBuffer.allocate(HEADER_SIZE + payload.length);
+        bb.put((byte) tag);
+        bb.put(padId(originId));
+        bb.put(padId(targetId));
+        bb.putLong(sequence);
+        bb.put((byte) ttl);
+        bb.put(transport);
+        bb.put(payload);
+        return bb.array();
+    }
+
+    public byte[] toBytesWithDecrementedTtl() {
+        byte[] data = toBytes();
+        data[17] = (byte) Math.max(0, ttl - 1);
+        return data;
+    }
+
+    public String deduplicationKey() {
+        return originId + ":" + sequence;
+    }
+
+    public boolean isBroadcast() {
+        return BROADCAST_ID.equals(targetId);
+    }
+
+    private static byte[] padId(String id) {
+        byte[] b = new byte[4];
+        byte[] src = id.getBytes(StandardCharsets.US_ASCII);
+        System.arraycopy(src, 0, b, 0, Math.min(src.length, 4));
+        return b;
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/OpusAudioManager.java">
+package com.example.rescuelink;
+
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioRecord;
+import android.media.AudioTrack;
+import android.media.MediaCodec;
+import android.media.MediaFormat;
+import android.media.MediaRecorder;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+
+import androidx.core.app.ActivityCompat;
+
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+public class OpusAudioManager {
+
+    private static final int SAMPLE_RATE = 48000;
+    // [CHANGE APPLIED]: Increased bitrate for clearer voice
+    private static final int BITRATE     = 20000;
+
+    private final WeakReference<Context> contextRef;
+    private final TransportBroker broker;
+    private final String myMeshId;
+
+    private final boolean canEncode;
+    private volatile boolean isDecoderReady = false;
+
+    private AudioRecord audioRecord;
+    private volatile AudioTrack audioTrack;
+    private MediaCodec encoder;
+    private MediaCodec decoder;
+    private boolean isRecording = false;
+
+    private ExecutorService encoderExecutor;
+    private ExecutorService decoderExecutor;
+
+    private long encoderPresentationTimeUs = 0;
+
+    // [CHANGE APPLIED]: Jitter Buffer for smooth playback
+    private final java.util.concurrent.LinkedBlockingDeque<byte[]> jitterBuffer
+            = new java.util.concurrent.LinkedBlockingDeque<>(12);
+
+    private volatile byte[] lastConfigFrame = null;
+    private final Handler configResendHandler = new Handler(Looper.getMainLooper());
+    private final Runnable configResendRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (isRecording && lastConfigFrame != null) {
+                byte[] configPacket = new byte[1 + lastConfigFrame.length];
+                configPacket[0] = 0x01;
+                System.arraycopy(lastConfigFrame, 0, configPacket, 1, lastConfigFrame.length);
+
+                MeshPacket packet = new MeshPacket(
+                        'A', myMeshId, MeshPacket.BROADCAST_ID, configPacket);
+
+                if (broker != null) broker.send(packet);
+                configResendHandler.postDelayed(this, 2000);
+            }
+        }
+    };
+
+    public OpusAudioManager(TransportBroker broker, String myMeshId, Context context) {
+        this.contextRef = new WeakReference<>(context.getApplicationContext());
+        this.broker     = broker;
+        this.myMeshId   = myMeshId;
+        this.canEncode  = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
+        setupDecoder();
+    }
+
+    public boolean canTransmitAudio() {
+        return canEncode;
+    }
+
+    private void setupEncoder() throws IOException {
+        MediaFormat format = MediaFormat.createAudioFormat(
+                MediaFormat.MIMETYPE_AUDIO_OPUS, SAMPLE_RATE, 1);
+        format.setInteger(MediaFormat.KEY_BIT_RATE, BITRATE);
+        format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 8192);
+
+        encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_OPUS);
+        encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+        encoder.start();
+
+        encoderExecutor = Executors.newFixedThreadPool(2);
+        encoderPresentationTimeUs = 0;
+    }
+
+    private void setupDecoder() {
+        try {
+            MediaFormat format = MediaFormat.createAudioFormat(
+                    MediaFormat.MIMETYPE_AUDIO_OPUS, SAMPLE_RATE, 1);
+            format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 8192);
+
+            decoder = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_AUDIO_OPUS);
+            decoder.configure(format, null, null, 0);
+            decoder.start();
+
+            decoderExecutor = Executors.newFixedThreadPool(3);
+            isDecoderReady = true;
+
+            startDecoderOutputLoop();
+            startJitterDrainLoop(); // [CHANGE APPLIED]: Start the drain loop
+
+        } catch (IOException e) {
+            isDecoderReady = false;
+            Log.e("OpusAudio", "Decoder setup FAILED: " + e.getMessage());
+        }
+    }
+
+    private void startDecoderOutputLoop() {
+        decoderExecutor.execute(() -> {
+            while (isDecoderReady) {
+                if (decoder == null) break;
+                try {
+                    MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+                    // [CHANGE APPLIED]: Reduced timeout to 10ms to prevent stacking delay
+                    int outputIndex = decoder.dequeueOutputBuffer(info, 10000);
+
+                    if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                        MediaFormat actualFormat = decoder.getOutputFormat();
+                        int actualSampleRate = actualFormat.containsKey(MediaFormat.KEY_SAMPLE_RATE)
+                                ? actualFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE) : SAMPLE_RATE;
+                        int actualChannels = actualFormat.containsKey(MediaFormat.KEY_CHANNEL_COUNT)
+                                ? actualFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) : 1;
+                        recreateAudioTrack(actualSampleRate, actualChannels);
+                        continue;
+                    }
+
+                    if (outputIndex == MediaCodec.INFO_TRY_AGAIN_LATER) continue;
+
+                    if (outputIndex >= 0) {
+                        ByteBuffer buf = decoder.getOutputBuffer(outputIndex);
+                        if (buf != null && info.size > 0) {
+                            byte[] pcm = new byte[info.size];
+                            buf.position(info.offset);
+                            buf.limit(info.offset + info.size);
+                            buf.get(pcm);
+                            AudioTrack track = audioTrack;
+                            if (track != null) {
+                                track.write(pcm, 0, pcm.length);
+                            }
+                        }
+                        decoder.releaseOutputBuffer(outputIndex, false);
+                    }
+
+                } catch (IllegalStateException e) {
+                    isDecoderReady = false;
+                    break;
+                } catch (Exception e) {
+                    Log.e("OpusAudio", "Decoder output error: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    // [CHANGE APPLIED]: Jitter Drain Thread
+    private void startJitterDrainLoop() {
+        decoderExecutor.execute(() -> {
+            while (isDecoderReady) {
+                try {
+                    byte[] rawData = jitterBuffer.poll(20, TimeUnit.MILLISECONDS);
+                    if (rawData != null) submitToDecoder(rawData);
+                } catch (InterruptedException ignored) {}
+            }
+        });
+    }
+
+    private void recreateAudioTrack(int sampleRate, int channels) {
+        AudioTrack old = audioTrack;
+        audioTrack = null;
+        if (old != null) {
+            old.stop();
+            old.release();
+        }
+
+        int channelConfig = channels == 2
+                ? AudioFormat.CHANNEL_OUT_STEREO
+                : AudioFormat.CHANNEL_OUT_MONO;
+
+        // [CHANGE APPLIED]: Multiply buffer size by 4 to prevent dropouts
+        int bufSize = AudioTrack.getMinBufferSize(
+                sampleRate, channelConfig, AudioFormat.ENCODING_PCM_16BIT) * 4;
+
+        AudioTrack track = new AudioTrack(
+                AudioManager.STREAM_MUSIC,
+                sampleRate, channelConfig, AudioFormat.ENCODING_PCM_16BIT,
+                bufSize * 2, AudioTrack.MODE_STREAM);
+        track.play();
+        audioTrack = track;
+    }
+
+    public void startRecording() {
+        if (!canEncode) return;
+
+        Context ctx = contextRef.get();
+        if (ctx == null) return;
+        if (ActivityCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) return;
+
+        try { setupEncoder(); } catch (IOException e) { return; }
+
+        // [CHANGE APPLIED]: Multiply record buffer size by 4
+        int bufSize = AudioRecord.getMinBufferSize(SAMPLE_RATE,
+                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT) * 4;
+
+        audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
+                SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufSize);
+        audioRecord.startRecording();
+
+        isRecording = true;
+        lastConfigFrame = null;
+
+        encoderExecutor.execute(() -> {
+            byte[] inputBuf = new byte[bufSize];
+            while (isRecording) {
+                int read = audioRecord.read(inputBuf, 0, inputBuf.length);
+                if (read <= 0) continue;
+
+                try {
+                    int inputIndex = encoder.dequeueInputBuffer(10000);
+                    if (inputIndex < 0) continue;
+
+                    ByteBuffer buf = encoder.getInputBuffer(inputIndex);
+                    if (buf != null) {
+                        buf.clear();
+                        buf.put(inputBuf, 0, read);
+                        encoder.queueInputBuffer(inputIndex, 0, read, encoderPresentationTimeUs, 0);
+                        encoderPresentationTimeUs += (read / 2) * 1_000_000L / SAMPLE_RATE;
+                    }
+                } catch (IllegalStateException e) {
+                    Log.w("OpusAudio", "Encoder safely stopped during recording loop.");
+                    break;
+                }
+            }
+            try {
+                int inputIndex = encoder.dequeueInputBuffer(10000);
+                if (inputIndex >= 0) encoder.queueInputBuffer(inputIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
+            } catch (Exception ignored) {}
+        });
+
+        encoderExecutor.execute(() -> {
+            MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+            while (isRecording) {
+                try {
+                    int outputIndex = encoder.dequeueOutputBuffer(info, 10000);
+
+                    if (outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) continue;
+                    if (outputIndex == MediaCodec.INFO_TRY_AGAIN_LATER) continue;
+
+                    if (outputIndex >= 0) {
+                        ByteBuffer buf = encoder.getOutputBuffer(outputIndex);
+                        if (buf != null && info.size > 0) {
+                            byte[] compressed = new byte[info.size];
+                            buf.position(info.offset);
+                            buf.limit(info.offset + info.size);
+                            buf.get(compressed);
+
+                            boolean isConfig = (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0;
+
+                            if (isConfig) {
+                                lastConfigFrame = compressed.clone();
+                                configResendHandler.removeCallbacks(configResendRunnable);
+                                configResendHandler.postDelayed(configResendRunnable, 2000);
+                            }
+
+                            byte[] packetData = new byte[1 + compressed.length];
+                            packetData[0] = isConfig ? (byte) 0x01 : (byte) 0x00;
+                            System.arraycopy(compressed, 0, packetData, 1, compressed.length);
+
+                            MeshPacket packet = new MeshPacket(
+                                    'A', myMeshId, MeshPacket.BROADCAST_ID, packetData);
+                            if (broker != null) broker.send(packet);
+                        }
+                        encoder.releaseOutputBuffer(outputIndex, false);
+                        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) break;
+                    }
+                } catch (IllegalStateException e) {
+                    break; // Safely exit if encoder is shut down by main thread
+                }
+            }
+        });
+    }
+
+    // [CHANGE APPLIED]: Feed the Jitter Buffer instead of direct submission
+    public void playIncomingAudio(byte[] rawData) {
+        if (!isDecoderReady || rawData == null || rawData.length < 2) return;
+        jitterBuffer.offer(rawData);
+    }
+
+    // [CHANGE APPLIED]: Extracted inner logic for the Drain Thread
+    private void submitToDecoder(byte[] rawData) {
+        if (!isDecoderReady || decoder == null || decoderExecutor == null || decoderExecutor.isShutdown()) {
+            if (decoder == null || decoderExecutor == null || decoderExecutor.isShutdown()) {
+                new Handler(Looper.getMainLooper()).post(this::setupDecoder);
+            }
+            return;
+        }
+
+        final byte marker = rawData[0];
+        final byte[] opusData = new byte[rawData.length - 1];
+        System.arraycopy(rawData, 1, opusData, 0, opusData.length);
+
+        try {
+            int inputIndex = decoder.dequeueInputBuffer(10000);
+            if (inputIndex < 0) return;
+
+            ByteBuffer buf = decoder.getInputBuffer(inputIndex);
+            if (buf == null) return;
+
+            buf.clear();
+            if (opusData.length > buf.capacity()) {
+                decoder.queueInputBuffer(inputIndex, 0, 0, 0, 0);
+                return;
+            }
+            buf.put(opusData);
+
+            if (marker == 0x01) {
+                decoder.queueInputBuffer(inputIndex, 0, opusData.length,
+                        0, MediaCodec.BUFFER_FLAG_CODEC_CONFIG);
+            } else {
+                decoder.queueInputBuffer(inputIndex, 0, opusData.length,
+                        System.nanoTime() / 1000, 0);
+            }
+
+        } catch (IllegalStateException e) {
+            isDecoderReady = false;
+        } catch (Exception e) {
+            Log.e("OpusAudio", "Decoder input error: " + e.getMessage());
+        }
+    }
+
+    public void stopRecording() {
+        isRecording = false;
+        configResendHandler.removeCallbacks(configResendRunnable);
+        lastConfigFrame = null;
+
+        if (encoder != null) {
+            try {
+                encoder.stop();
+                encoder.release();
+            } catch (Exception ignored) {}
+            encoder = null;
+        }
+        if (encoderExecutor != null) {
+            encoderExecutor.shutdown();
+            encoderExecutor = null;
+        }
+        if (audioRecord != null) {
+            audioRecord.stop();
+            audioRecord.release();
+            audioRecord = null;
+        }
+    }
+
+    public void release() {
+        stopRecording();
+        isDecoderReady = false;
+        if (decoderExecutor != null) {
+            decoderExecutor.shutdown();
+            decoderExecutor = null;
+        }
+        AudioTrack track = audioTrack;
+        audioTrack = null;
+        if (track != null) {
+            track.stop();
+            track.release();
+        }
+        if (decoder != null) {
+            decoder.stop();
+            decoder.release();
+            decoder = null;
+        }
+    }
+}
+</file>
+
+<file path="app/src/main/res/values/strings.xml">
+<resources>
+    <string name="app_name">RescueLink</string>
+
+    <!-- PTT button states — referenced in MainActivity -->
+    <string name="ptt_idle">🎙 Hold to Talk</string>
+    <string name="ptt_talking">📡 Transmitting…</string>
+
+    <!-- Status messages — avoids hardcoded setText strings -->
+    <string name="status_scanning">Scanning for mesh…</string>
+    <string name="status_host">Hosting mesh node</string>
+    <string name="status_sos_active">SOS ACTIVE — Broadcasting on all channels</string>
+    <string name="status_sos_received">🚨 SOS FROM %1$s</string>
+    <string name="status_permissions_denied">Permissions required — please restart and allow all</string>
+
+    <!-- Log messages -->
+    <string name="log_repeater_only">DEVICE: Repeater-only mode (API %1$d). PTT unavailable.</string>
+    <string name="log_permissions_denied">ERROR: Required permissions denied. Mesh cannot start.</string>
+    <string name="log_permissions_instruction">Please grant Location, Microphone, and Nearby Devices permissions.</string>
+</resources>
+</file>
+
+<file path="settings.gradle">
+pluginManagement {
+    repositories {
+        google {
+            content {
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
+            }
+        }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }  // ← add this line
+    }
+}
+
+rootProject.name = "RescueLink"
+include ':app'
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/TransportBroker.java">
+package com.example.rescuelink;
+
+import android.util.Log;
+
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+
+public class TransportBroker {
+
+    private static final String TAG = "TransportBroker";
+
+    public interface IncomingPacketHandler {
+        // [MODIFIED]: Added originalEncryptedPayload to pass through to relay
+        void handle(MeshPacket packet, String sourceEndpointId, byte[] originalEncryptedPayload);
+    }
+
+    private final NearbyMeshManager nearbyManager;
+    private final HotspotMeshManager hotspotManager;
+    private final PacketDeduplicator deduplicator;
+    private final IncomingPacketHandler incomingHandler;
+    private final EncryptionManager encryption;
+
+    // ==========================================
+    //      THE TRAFFIC COP (Bandwidth Gating)
+    // ==========================================
+    private volatile boolean isAudioActive = false;
+
+    public void setAudioActive(boolean active) {
+        this.isAudioActive = active;
+        Log.d(TAG, "Traffic Cop: Audio active state = " + active);
+    }
+
+    public TransportBroker(
+            NearbyMeshManager nearby,
+            HotspotMeshManager hotspot,
+            PacketDeduplicator deduplicator,
+            IncomingPacketHandler handler
+    ) {
+        this.nearbyManager   = nearby;
+        this.hotspotManager  = hotspot;
+        this.deduplicator    = deduplicator;
+        this.incomingHandler = handler;
+        this.encryption      = new EncryptionManager();
+
+        hotspot.setPacketListener((data, sourceIp) -> onPacketReceived(data, sourceIp));
+        nearby.setPacketListener((data, endpointId) -> onPacketReceived(data, endpointId));
+    }
+
+    // ─── Incoming ────────────────────────────────────────────────────────
+
+    private void onPacketReceived(byte[] data, String sourceId) {
+        MeshPacket packet = MeshPacket.parse(data);
+        if (packet == null) return;
+
+        // Dedup before decryption — relay nodes dedup without decrypting
+        if (!deduplicator.checkAndMark(packet)) return;
+
+        // Decrypt payload
+        byte[] decryptedPayload = encryption.decrypt(packet.payload);
+        if (decryptedPayload == null) {
+            if (packet.tag != 'A') {
+                Log.d(TAG, "Dropped — decrypt failed tag:" + packet.tag
+                        + " from:" + packet.originId);
+            }
+            return;
+        }
+
+        // Rebuild with decrypted payload — preserves all header fields
+        MeshPacket decryptedPacket = new MeshPacket(
+                packet.tag,
+                packet.originId,
+                packet.targetId,
+                packet.sequence,
+                packet.ttl,
+                packet.transport,
+                decryptedPayload);
+
+        // [MODIFIED]: Pass the original encrypted packet.payload through
+        incomingHandler.handle(decryptedPacket, sourceId, packet.payload);
+    }
+
+    // ─── Outgoing ────────────────────────────────────────────────────────
+
+    public void send(MeshPacket packet) {
+        // Pre-gate check: If audio is active, don't even bother encrypting GPS/Status packets. Save CPU!
+        if (isAudioActive && (packet.tag == 'S' || packet.tag == 'L')) {
+            return;
+        }
+
+        byte[] encryptedPayload;
+        try {
+            if (packet.tag == 'A') {
+                // FAST PATH: audio uses counter IV — no SecureRandom blocking
+                encryptedPayload = encryption.encryptWithSequence(
+                        packet.payload, packet.sequence);
+            } else {
+                // SAFE PATH: all other packet types use SecureRandom
+                encryptedPayload = encryption.encrypt(packet.payload);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Encryption failed: " + e.getMessage());
+            return;
+        }
+
+        // Build wire bytes ONCE — fixed double allocation bug
+        byte[] data = buildWireBytes(packet, encryptedPayload, packet.ttl);
+
+        switch (packet.tag) {
+            case 'A': sendAudio(data);     break;
+            case 'E': sendEmergency(data); break;
+            case 'M': sendMessage(data);   break;
+            case 'S': sendStatus(data);    break;
+            case 'C': sendControl(data);   break;
+            case 'L': sendLocation(data);  break;
+            default:  sendMessage(data);
+        }
+    }
+
+    // ─── Relay ───────────────────────────────────────────────────────────
+
+    // [MODIFIED]: Added originalEncryptedData parameter and removed re-encryption try/catch block
+    public void relay(MeshPacket decryptedPacket, String receivedFromId, boolean isForMe, byte[] originalEncryptedData) {
+        if (decryptedPacket.ttl <= 0) return;
+
+        // Build relay bytes with the original encrypted payload, just decrement TTL
+        byte[] relayData = buildWireBytes(
+                decryptedPacket,
+                originalEncryptedData,
+                decryptedPacket.ttl - 1);
+
+        if (decryptedPacket.tag == 'A') {
+            // [BUG-3 FIX]: Audio relay must mirror sendAudio() — prefer hotspot when connected;
+            // only fall back to Nearby otherwise to prevent doubling bandwidth at 50 fps.
+            boolean sent = hotspotManager.isConnected() && hotspotManager.send(relayData);
+            if (!sent) nearbyManager.sendToAllExcept(receivedFromId, relayData);
+
+        } else if (decryptedPacket.isBroadcast()
+                || decryptedPacket.tag == 'C'
+                || decryptedPacket.tag == 'L') {
+            // Non-audio broadcasts still flood all transports (low rate — fine)
+            nearbyManager.sendToAllExcept(receivedFromId, relayData);
+            hotspotManager.send(relayData);
+
+        } else if (!isForMe) {
+            // Unicast: try routing table first
+            String nextHop = nearbyManager.getNextHop(decryptedPacket.targetId);
+            if (nextHop != null) {
+                nearbyManager.sendTo(nextHop, relayData);
+            } else {
+                nearbyManager.sendToAllExcept(receivedFromId, relayData);
+                hotspotManager.send(relayData);
+            }
+        }
+    }
+
+    // ─── Wire bytes builder ───────────────────────────────────────────────
+
+    private byte[] buildWireBytes(MeshPacket packet, byte[] encryptedPayload, int ttl) {
+        ByteBuffer bb = ByteBuffer.allocate(MeshPacket.HEADER_SIZE + encryptedPayload.length);
+        bb.put((byte) packet.tag);
+        bb.put(padId(packet.originId));
+        bb.put(padId(packet.targetId));
+        bb.putLong(packet.sequence);
+        bb.put((byte) Math.max(0, ttl));
+        bb.put(packet.transport);
+        bb.put(encryptedPayload);
+        return bb.array();
+    }
+
+    private byte[] padId(String id) {
+        byte[] b   = new byte[4];
+        byte[] src = id.getBytes(StandardCharsets.US_ASCII);
+        System.arraycopy(src, 0, b, 0, Math.min(src.length, 4));
+        return b;
+    }
+
+    // ─── Send routing ─────────────────────────────────────────────────────
+
+    private void sendAudio(byte[] data) {
+        boolean sent = hotspotManager.isConnected() && hotspotManager.send(data);
+        if (!sent) nearbyManager.sendToAll(data);
+    }
+
+    private void sendEmergency(byte[] data) {
+        nearbyManager.sendToAll(data);
+        hotspotManager.send(data);
+    }
+
+    private void sendMessage(byte[] data) {
+        boolean sent = hotspotManager.isConnected() && hotspotManager.send(data);
+        if (!sent) nearbyManager.sendToAll(data);
+    }
+
+    private void sendStatus(byte[] data) {
+        if (isAudioActive) return;
+        nearbyManager.sendToAll(data);
+        if (hotspotManager.isConnected()) hotspotManager.send(data);
+    }
+
+    private void sendControl(byte[] data) {
+        nearbyManager.sendToAll(data);
+        if (hotspotManager.isConnected()) hotspotManager.send(data);
+    }
+
+    private void sendLocation(byte[] data) {
+        if (isAudioActive) return;
+        nearbyManager.sendToAll(data);
+        if (hotspotManager.isConnected()) hotspotManager.send(data);
+    }
+}
+</file>
+
+<file path="app/src/main/res/layout/activity_main.xml">
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#F0F0F0">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingBottom="10dp">
+
+        <TextView
+            android:id="@+id/myIdText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Device: Generating..."
+            android:textColor="#333333"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnDisconnect"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:backgroundTint="#D32F2F"
+            android:text="RESET"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:background="#E0E0E0"
+        android:padding="5dp"
+        android:text="Status: Initializing..."
+        android:textColor="#000000"
+        android:textSize="18sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="--- NETWORK LOGS ---"
+        android:textStyle="bold"
+        android:layout_marginBottom="5dp"/>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginBottom="10dp">
+
+        <ScrollView
+            android:id="@+id/logScrollView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#FFFFFF"
+            android:padding="10dp">
+
+            <TextView
+                android:id="@+id/debugLog"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="System started..."
+                android:textSize="12sp"
+                android:textColor="#000000"
+                android:fontFamily="monospace"/>
+        </ScrollView>
+
+        <FrameLayout
+            android:id="@+id/mapContainer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintHeight_percent="0.5"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:visibility="invisible"> <org.maplibre.android.maps.MapView
+            android:id="@+id/mapView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        </FrameLayout>
+
+        <Button
+            android:id="@+id/btnToggleMap"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🗺 Map"
+            android:backgroundTint="#333333"
+            android:textColor="#FFFFFF"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_margin="16dp" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/inputMessage"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="#FFFFFF"
+            android:hint="Type message..."
+            android:padding="15dp" />
+
+        <Button
+            android:id="@+id/btnSend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SEND"
+            android:backgroundTint="#2196F3"
+            android:layout_marginStart="5dp"/>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/channelStatusText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Channel: Free"
+        android:textAlignment="center"
+        android:padding="8dp"
+        android:textSize="14sp" />
+
+    <Button
+        android:id="@+id/btnPtt"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:text="HOLD TO TALK"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:backgroundTint="#FF0000"
+        android:textColor="#FFFFFF"
+        android:layout_marginTop="10dp"/>
+
+    <Button
+        android:id="@+id/btnSos"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🚨 Send SOS"
+        android:backgroundTint="#D32F2F"
+        android:textColor="#FFFFFF" />
+
+</LinearLayout>
+</file>
+
+<file path="app/src/main/java/com/example/rescuelink/MainActivity.java">
+package com.example.rescuelink;
+
+import android.Manifest;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.os.BatteryManager;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ScrollView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import org.maplibre.android.MapLibre;
+
+public class MainActivity extends AppCompatActivity {
+
+    public final String USER_NICKNAME = Build.MANUFACTURER + " " + Build.MODEL;
+    public String myMeshId;
+
+    // --- Mesh Location & Map Tools ---
+    private com.example.rescuelink.location.RescueLinkLocationManager locationManager;
+    private com.example.rescuelink.location.LocationBroadcaster locationBroadcaster;
+    private com.example.rescuelink.location.NodeLocationStore nodeLocationStore;
+    private com.example.rescuelink.map.MapUIManager mapUIManager;
+
+    // --- Core Architecture Managers ---
+    private PacketDeduplicator deduplicator;
+    private NearbyMeshManager nearbyManager;
+    private HotspotMeshManager hotspotManager;
+    private com.example.rescuelink.TransportBroker audioBroker; // The Unified Pipe
+    private OpusAudioManager audioManager;
+    private BleBeaconManager bleBeacon;
+
+    public boolean isAppInBackground = false;
+    private final Map<String, Integer> deviceScores = new ConcurrentHashMap<>();
+
+    // --- Half-Duplex Channel Control ---
+    private String channelOwner = null;
+    private static final int CHANNEL_TIMEOUT_MS = 10000;
+    private final Handler channelTimeoutHandler = new Handler(Looper.getMainLooper());
+    private final Runnable channelTimeoutRunnable = () -> {
+        if (channelOwner != null) {
+            // [BUG-2 FIX]: Ensure L/S packets resume if a session times out!
+            if (audioBroker != null) audioBroker.setAudioActive(false);
+            log("CHANNEL: Auto-released after timeout (owner: " + channelOwner + ")");
+            releaseChannel();
+        }
+    };
+
+    // --- UI Elements ---
+    private TextView statusText, myIdText, debugLog, channelStatusText;
+    private ScrollView logScrollView;
+    private Button btnPtt, btnSend, btnDisconnect, btnSos;
+    private EditText inputMessage;
+    private SharedPreferences prefs;
+
+    // ==========================================
+    //      LIFECYCLE
+    // ==========================================
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        org.maplibre.android.MapLibre.getInstance(this);
+        setContentView(R.layout.activity_main);
+
+        SharedPreferences p = getSharedPreferences("RescuePrefs", MODE_PRIVATE);
+        String lastCrash = p.getString("last_crash", null);
+        if (lastCrash != null) {
+            Log.e("LAST_CRASH", lastCrash);
+            p.edit().remove("last_crash").apply();
+        }
+
+        myMeshId = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+        initUI();
+        setupCrashHandler();
+
+        if (hasPermissions()) {
+            initMeshInfrastructure();
+        } else {
+            requestPermissions();
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (mapUIManager != null) mapUIManager.onStart();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        isAppInBackground = true;
+        log("MODE: Repeater (Background)");
+        if (mapUIManager != null) mapUIManager.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isAppInBackground = false;
+        log("MODE: Active Node (Foreground)");
+        if (mapUIManager != null) mapUIManager.onResume();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (mapUIManager != null) mapUIManager.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        channelTimeoutHandler.removeCallbacks(channelTimeoutRunnable);
+        if (mapUIManager != null) mapUIManager.onDestroy();
+        if (locationManager != null) locationManager.stopUpdates();
+        if (locationBroadcaster != null) locationBroadcaster.stop();
+        if (nearbyManager != null) nearbyManager.disconnectAll();
+        if (hotspotManager != null) hotspotManager.stop();
+        if (audioManager != null) audioManager.release();
+    }
+
+    // ==========================================
+    //      UI INIT
+    // ==========================================
+
+    private void initUI() {
+        statusText        = findViewById(R.id.statusText);
+        myIdText          = findViewById(R.id.myIdText);
+        debugLog          = findViewById(R.id.debugLog);
+        logScrollView     = (ScrollView) debugLog.getParent();
+        btnPtt            = findViewById(R.id.btnPtt);
+        btnSend           = findViewById(R.id.btnSend);
+        btnDisconnect     = findViewById(R.id.btnDisconnect);
+        btnSos            = findViewById(R.id.btnSos);
+        inputMessage      = findViewById(R.id.inputMessage);
+        channelStatusText = findViewById(R.id.channelStatusText);
+
+        myIdText.setText(String.format("%s [%s]", USER_NICKNAME, myMeshId));
+        debugLog.setMovementMethod(new ScrollingMovementMethod());
+
+        btnPtt.setVisibility(View.GONE);
+        btnSos.setVisibility(View.GONE);
+    }
+
+    // ==========================================
+    //      MESH INFRASTRUCTURE
+    // ==========================================
+
+    private void initMeshInfrastructure() {
+        log("SYSTEM: Booting Hybrid Mesh Architecture...");
+
+        deduplicator  = new PacketDeduplicator();
+        nearbyManager = new NearbyMeshManager(this);
+        hotspotManager = new HotspotMeshManager(this, null);
+        bleBeacon     = new BleBeaconManager(this);
+
+        nodeLocationStore = new com.example.rescuelink.location.NodeLocationStore();
+        locationManager   = new com.example.rescuelink.location.RescueLinkLocationManager(this);
+        locationManager.startUpdates();
+
+        // 1. Initialize Unified Broker
+        audioBroker = new com.example.rescuelink.TransportBroker(
+                nearbyManager, hotspotManager, deduplicator, this::handleIncomingPacket
+        );
+
+        // 2. Initialize Broadcaster using audioBroker
+        locationBroadcaster = new com.example.rescuelink.location.LocationBroadcaster(audioBroker, myMeshId, locationManager);
+        locationBroadcaster.setStatusProvider(new com.example.rescuelink.location.LocationBroadcaster.StatusProvider() {
+            @Override
+            public int getBatteryLevel() {
+                return MainActivity.this.getBatteryLevel();
+            }
+            @Override
+            public boolean isSosActive() {
+                return statusText.getText().toString().contains("SOS");
+            }
+        });
+        locationBroadcaster.start();
+
+        audioManager = new OpusAudioManager(audioBroker, myMeshId, this);
+
+        setupListeners();
+        nearbyManager.startAutonomousNetwork();
+        startOptimizationLoop();
+
+        Intent serviceIntent = new Intent(this, MeshForegroundService.class);
+        serviceIntent.putExtra("MESH_ID", myMeshId);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
+
+        mapUIManager = new com.example.rescuelink.map.MapUIManager(this, nodeLocationStore, locationManager);
+        mapUIManager.init(null);
+
+        log("SYSTEM: Mesh ready. ID = " + myMeshId);
+    }
+
+    // ==========================================
+    //      LISTENERS
+    // ==========================================
+
+    private void setupListeners() {
+        if (audioManager.canTransmitAudio()) {
+            btnPtt.setVisibility(View.VISIBLE);
+            btnPtt.setOnTouchListener((v, event) -> {
+                int action = event.getAction();
+
+                if (action == MotionEvent.ACTION_DOWN) {
+                    if (channelOwner != null) {
+                        log("CHANNEL: Busy — " + channelOwner + " is talking");
+                        v.performClick();
+                        return true;
+                    }
+
+                    claimChannel(myMeshId);
+                    sendControlPacket("PTT_START:" + myMeshId);
+
+                    // Central Gate - Tell the broker to pause GPS/Status traffic
+                    if (audioBroker != null) audioBroker.setAudioActive(true);
+
+                    audioManager.startRecording();
+                    btnPtt.setText(R.string.ptt_talking);
+                    v.performClick();
+
+                } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                    if (myMeshId.equals(channelOwner)) {
+                        // 1. Stop audio first (clears the bandwidth pipe immediately)
+                        audioManager.stopRecording();
+
+                        // 2. Open the gate (allow GPS/Status again)
+                        if (audioBroker != null) audioBroker.setAudioActive(false);
+
+                        // 3. Release locally
+                        releaseChannel();
+
+                        // 4. Progressive resend (Fires through the newly cleared pipe)
+                        sendControlPacket("PTT_END:" + myMeshId);
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> sendControlPacket("PTT_END:" + myMeshId), 150);
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> sendControlPacket("PTT_END:" + myMeshId), 400);
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> sendControlPacket("PTT_END:" + myMeshId), 800);
+                    }
+                    v.performClick();
+                }
+                return true;
+            });
+        } else {
+            btnPtt.setVisibility(View.GONE);
+            log(getString(R.string.log_repeater_only, Build.VERSION.SDK_INT));
+        }
+
+        btnSend.setOnClickListener(v -> {
+            if (audioBroker == null) { log("ERROR: Mesh not ready."); return; }
+            String m = inputMessage.getText().toString().trim();
+            if (!m.isEmpty()) {
+                MeshPacket textPacket = new MeshPacket(
+                        'M', myMeshId, MeshPacket.BROADCAST_ID,
+                        m.getBytes(StandardCharsets.UTF_8));
+                audioBroker.send(textPacket);
+                log("Me: " + m);
+                inputMessage.setText("");
+            }
+        });
+
+        btnSos.setVisibility(View.VISIBLE);
+        btnSos.setOnClickListener(v -> {
+            MeshPacket sosPacket = new MeshPacket(
+                    'E', myMeshId, MeshPacket.BROADCAST_ID,
+                    "SOS".getBytes(StandardCharsets.UTF_8));
+            audioBroker.send(sosPacket);
+            // [CHANGE APPLIED]: Pass actual GPS to BLE Beacon
+            bleBeacon.startSosBeacon(locationManager.getLatitude(), locationManager.getLongitude(), getBatteryLevel(), myMeshId);
+            log("SOS BROADCAST SENT on all channels");
+            statusText.setText(R.string.status_sos_active);
+            if (nodeLocationStore != null) nodeLocationStore.markSosActive(myMeshId);
+        });
+
+        btnDisconnect.setOnClickListener(v -> {
+            log("MANUAL RESET: Clearing all links...");
+            nearbyManager.disconnectAll();
+            hotspotManager.stop();
+            nearbyManager.startAutonomousNetwork();
+        });
+    }
+
+    // ==========================================
+    //      CHANNEL CONTROL
+    // ==========================================
+
+    private void claimChannel(String meshId) {
+        channelOwner = meshId;
+        channelTimeoutHandler.removeCallbacks(channelTimeoutRunnable);
+        channelTimeoutHandler.postDelayed(channelTimeoutRunnable, CHANNEL_TIMEOUT_MS);
+        updateChannelStatus();
+    }
+
+    private void releaseChannel() {
+        channelOwner = null;
+        channelTimeoutHandler.removeCallbacks(channelTimeoutRunnable);
+        updateChannelStatus();
+    }
+
+    private void updateChannelStatus() {
+        runOnUiThread(() -> {
+            if (channelOwner == null) {
+                if (audioManager != null && audioManager.canTransmitAudio()) {
+                    btnPtt.setEnabled(true);
+                    btnPtt.setAlpha(1.0f);
+                    btnPtt.setText(R.string.ptt_idle);
+                }
+                if (channelStatusText != null) {
+                    channelStatusText.setText("Channel: Free");
+                    channelStatusText.setTextColor(getResources().getColor(android.R.color.holo_green_dark, null));
+                }
+            } else if (myMeshId.equals(channelOwner)) {
+                if (channelStatusText != null) {
+                    channelStatusText.setText("Channel: YOU are transmitting");
+                    channelStatusText.setTextColor(getResources().getColor(android.R.color.holo_orange_dark, null));
+                }
+            } else {
+                if (audioManager != null && audioManager.canTransmitAudio()) {
+                    btnPtt.setEnabled(false);
+                    btnPtt.setAlpha(0.4f);
+                    btnPtt.setText(channelOwner + " talking...");
+                }
+                if (channelStatusText != null) {
+                    channelStatusText.setText("Channel: " + channelOwner + " is talking");
+                    channelStatusText.setTextColor(getResources().getColor(android.R.color.holo_red_dark, null));
+                }
+            }
+        });
+    }
+
+    private void sendControlPacket(String controlMessage) {
+        if (audioBroker == null) return;
+        MeshPacket controlPacket = new MeshPacket(
+                'C', myMeshId, MeshPacket.BROADCAST_ID,
+                controlMessage.getBytes(StandardCharsets.UTF_8));
+        audioBroker.send(controlPacket);
+    }
+
+    // ==========================================
+    //      PACKET HANDLER (CRASH-PROOF)
+    // ==========================================
+
+    // ==========================================
+    //      PACKET HANDLER (CRASH-PROOF)
+    // ==========================================
+
+    // [CHANGE APPLIED]: Signature updated to accept originalEncryptedPayload
+    // [CHANGE APPLIED]: Signature updated to accept originalEncryptedPayload
+    private void handleIncomingPacket(MeshPacket packet, String sourceId, byte[] originalEncryptedPayload) {
+        try {
+            if (packet == null || sourceId == null) return;
+            nearbyManager.updateRoutingTable(packet.originId, sourceId);
+            boolean isForMe = packet.isBroadcast() || packet.targetId.equals(myMeshId);
+
+            if (isForMe) {
+                switch (packet.tag) {
+                    case 'A':
+                        // [BUG-1 FIX]: Passive relay-only nodes (API < Q) must stay silent.
+                        if (audioManager != null && audioManager.canTransmitAudio()) {
+                            audioManager.playIncomingAudio(packet.payload);
+                        }
+                        break;
+                    case 'M':
+                        if (packet.payload != null) {
+                            String msg = new String(packet.payload, StandardCharsets.UTF_8);
+                            log(packet.originId + ": " + msg);
+                            if (nodeLocationStore != null) nodeLocationStore.updateLastMessage(packet.originId, msg);
+                        }
+                        break;
+                    case 'L':
+                        if (packet.payload != null) {
+                            String locData = new String(packet.payload, StandardCharsets.UTF_8);
+                            String[] parts = locData.split("\\|");
+                            if (parts.length >= 7) {
+                                double lat = Double.parseDouble(parts[2]);
+                                double lon = Double.parseDouble(parts[3]);
+                                float acc = Float.parseFloat(parts[4]);
+                                int bat = Integer.parseInt(parts[5]);
+                                boolean isSos = Boolean.parseBoolean(parts[6]);
+                                if (nodeLocationStore != null) {
+                                    nodeLocationStore.updateLocation(packet.originId, lat, lon, acc, bat, true);
+                                    if (isSos) nodeLocationStore.markSosActive(packet.originId);
+                                }
+                            }
+                        }
+                        break;
+                    case 'S':
+                        handleStatusUpdate(packet.originId, packet.payload);
+                        break;
+                    case 'E':
+                        log("SOS RECEIVED from " + packet.originId);
+                        if (nodeLocationStore != null) nodeLocationStore.markSosActive(packet.originId);
+                        runOnUiThread(() -> statusText.setText(getString(R.string.status_sos_received, packet.originId)));
+                        break;
+                    case 'C':
+                        handleControlPacket(packet.originId, packet.payload);
+                        break;
+                }
+            }
+            // Passing originalEncryptedPayload for zero-cost relay
+            if (audioBroker != null) audioBroker.relay(packet, sourceId, isForMe, originalEncryptedPayload);
+        } catch (Exception e) {
+            Log.e("MainActivity", "handleIncomingPacket error: " + e.getMessage());
+        }
+    }
+
+    private void handleControlPacket(String originId, byte[] payload) {
+        String control = new String(payload, StandardCharsets.UTF_8);
+        if (control.startsWith("PTT_START:")) {
+            String talkerId = control.substring(10);
+            if (!myMeshId.equals(talkerId)) {
+                channelOwner = talkerId;
+
+                // [BUG-2 FIX]: Suppress local L/S packets while RELAYING someone else's voice.
+                if (audioBroker != null) audioBroker.setAudioActive(true);
+
+                runOnUiThread(() -> {
+                    if (audioManager != null && audioManager.canTransmitAudio()) {
+                        btnPtt.setEnabled(false);
+                        btnPtt.setAlpha(0.4f);
+                        btnPtt.setText(talkerId + " talking...");
+                    }
+                    if (channelStatusText != null) channelStatusText.setText("Channel: " + talkerId + " is talking");
+                });
+                log("🎙 " + talkerId + " is transmitting");
+            }
+        } else if (control.startsWith("PTT_END:")) {
+            String talkerId = control.substring(8);
+            if (talkerId.equals(channelOwner)) {
+                channelOwner = null;
+                channelTimeoutHandler.removeCallbacks(channelTimeoutRunnable);
+
+                // [BUG-2 FIX]: Re-enable L/S packets once the remote voice session ends.
+                if (audioBroker != null) audioBroker.setAudioActive(false);
+
+                runOnUiThread(() -> {
+                    if (audioManager != null && audioManager.canTransmitAudio()) {
+                        btnPtt.setEnabled(true);
+                        btnPtt.setAlpha(1.0f);
+                        btnPtt.setText(R.string.ptt_idle);
+                    }
+                    if (channelStatusText != null) channelStatusText.setText("Channel: Free");
+                });
+                log("✓ Channel free");
+            }
+        }
+    }
+
+    private void handleStatusUpdate(String originId, byte[] body) {
+        if (body == null || originId == null) return;
+        try {
+            String bodyStr = new String(body, StandardCharsets.UTF_8).trim();
+            int peerScore = Integer.parseInt(bodyStr);
+            deviceScores.put(originId, peerScore);
+            if (nodeLocationStore != null) nodeLocationStore.updateStatus(originId, peerScore);
+
+            if (hotspotManager != null && nearbyManager != null) {
+                int ourScore = HotspotMeshManager.calculateNodeScore(this, nearbyManager.getPeerCount(), !isAppInBackground);
+                hotspotManager.evaluateBackboneRole(ourScore, deviceScores);
+            }
+
+            if (nearbyManager != null && !nearbyManager.isHost() && peerScore < 15) {
+                log("Host battery critical. Re-clustering...");
+                nearbyManager.disconnectAll();
+                nearbyManager.startAutonomousNetwork();
+            }
+        } catch (Exception e) {
+            Log.w("MainActivity", "handleStatusUpdate error: " + e.getMessage());
+        }
+    }
+
+    // [CHANGE APPLIED]: Cached handler
+    private final Handler optimizationHandler = new Handler(Looper.getMainLooper());
+    private final Runnable optimizationRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (nearbyManager != null && nearbyManager.isConnected() && !isAppInBackground) {
+                int myScore = HotspotMeshManager.calculateNodeScore(MainActivity.this, nearbyManager.getPeerCount(), true);
+                MeshPacket statusPacket = new MeshPacket('S', myMeshId, MeshPacket.BROADCAST_ID, String.valueOf(myScore).getBytes(StandardCharsets.UTF_8));
+                if (audioBroker != null) audioBroker.send(statusPacket);
+            }
+            optimizationHandler.postDelayed(this, 10000);
+        }
+    };
+
+    private void startOptimizationLoop() {
+        optimizationHandler.postDelayed(optimizationRunnable, 5000);
+    }
+
+    // ==========================================
+    //      HELPERS
+    // ==========================================
+
+    private int getBatteryLevel() {
+        IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = registerReceiver(null, filter);
+        if (batteryStatus != null) {
+            int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+            int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+            return (int) ((level / (float) scale) * 100);
+        }
+        return 50;
+    }
+
+    public void setStatusText(String text) {
+        runOnUiThread(() -> statusText.setText(text));
+    }
+
+    public void log(String msg) {
+        String t = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
+        runOnUiThread(() -> {
+            if (debugLog != null) {
+                debugLog.append("\n[" + t + "] " + msg);
+                if (logScrollView != null) logScrollView.post(() -> logScrollView.fullScroll(View.FOCUS_DOWN));
+            }
+        });
+    }
+
+    // ==========================================
+    //      PERMISSIONS
+    // ==========================================
+
+    private boolean hasPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                    && ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                    && ContextCompat.checkSelfPermission(this, "android.permission.NEARBY_WIFI_DEVICES") == PackageManager.PERMISSION_GRANTED;
+        }
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestPermissions() {
+        List<String> permissions = new ArrayList<>();
+        permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        permissions.add(Manifest.permission.RECORD_AUDIO);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) permissions.add("android.permission.NEARBY_WIFI_DEVICES");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            permissions.add(Manifest.permission.BLUETOOTH_SCAN);
+            permissions.add(Manifest.permission.BLUETOOTH_ADVERTISE);
+            permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
+        }
+        ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), 123);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 123) {
+            if (hasPermissions()) initMeshInfrastructure();
+            else {
+                log(getString(R.string.log_permissions_denied));
+                log(getString(R.string.log_permissions_instruction));
+                statusText.setText(R.string.status_permissions_denied);
+            }
+        }
+    }
+
+    private void setupCrashHandler() {
+        prefs = getSharedPreferences("RescuePrefs", MODE_PRIVATE);
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            prefs.edit().putString("last_crash", Log.getStackTraceString(e)).apply();
+            System.exit(2);
+        });
+    }
+}
+</file>
+
+</files>

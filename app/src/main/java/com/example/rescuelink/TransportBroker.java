@@ -10,7 +10,8 @@ public class TransportBroker {
     private static final String TAG = "TransportBroker";
 
     public interface IncomingPacketHandler {
-        void handle(MeshPacket packet, String sourceEndpointId);
+        // [MODIFIED]: Added originalEncryptedPayload to pass through to relay
+        void handle(MeshPacket packet, String sourceEndpointId, byte[] originalEncryptedPayload);
     }
 
     private final NearbyMeshManager nearbyManager;
@@ -57,7 +58,6 @@ public class TransportBroker {
         // Decrypt payload
         byte[] decryptedPayload = encryption.decrypt(packet.payload);
         if (decryptedPayload == null) {
-            // Only log for non-audio to avoid logcat flooding
             if (packet.tag != 'A') {
                 Log.d(TAG, "Dropped — decrypt failed tag:" + packet.tag
                         + " from:" + packet.originId);
@@ -75,7 +75,8 @@ public class TransportBroker {
                 packet.transport,
                 decryptedPayload);
 
-        incomingHandler.handle(decryptedPacket, sourceId);
+        // [MODIFIED]: Pass the original encrypted packet.payload through
+        incomingHandler.handle(decryptedPacket, sourceId, packet.payload);
     }
 
     // ─── Outgoing ────────────────────────────────────────────────────────
@@ -90,12 +91,10 @@ public class TransportBroker {
         try {
             if (packet.tag == 'A') {
                 // FAST PATH: audio uses counter IV — no SecureRandom blocking
-                // sequence is unique per packet (AtomicLong in MeshPacket)
                 encryptedPayload = encryption.encryptWithSequence(
                         packet.payload, packet.sequence);
             } else {
                 // SAFE PATH: all other packet types use SecureRandom
-                // Called at low frequency so blocking is not a problem
                 encryptedPayload = encryption.encrypt(packet.payload);
             }
         } catch (Exception e) {
@@ -103,7 +102,7 @@ public class TransportBroker {
             return;
         }
 
-        // Build wire bytes ONCE — fixed double allocation bug from previous version
+        // Build wire bytes ONCE — fixed double allocation bug
         byte[] data = buildWireBytes(packet, encryptedPayload, packet.ttl);
 
         switch (packet.tag) {
@@ -119,35 +118,31 @@ public class TransportBroker {
 
     // ─── Relay ───────────────────────────────────────────────────────────
 
-    public void relay(MeshPacket decryptedPacket, String receivedFromId, boolean isForMe) {
+    // [MODIFIED]: Added originalEncryptedData parameter and removed re-encryption try/catch block
+    public void relay(MeshPacket decryptedPacket, String receivedFromId, boolean isForMe, byte[] originalEncryptedData) {
         if (decryptedPacket.ttl <= 0) return;
 
-        // Re-encrypt for relay hop
-        byte[] reEncryptedPayload;
-        try {
-            if (decryptedPacket.tag == 'A') {
-                // Fast path for audio — counter IV, no SecureRandom
-                reEncryptedPayload = encryption.encryptWithSequence(
-                        decryptedPacket.payload, decryptedPacket.sequence);
-            } else {
-                reEncryptedPayload = encryption.encrypt(decryptedPacket.payload);
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Re-encrypt failed on relay: " + e.getMessage());
-            return;
-        }
-
-        // Build relay bytes with decremented TTL — single allocation
+        // Build relay bytes with the original encrypted payload, just decrement TTL
         byte[] relayData = buildWireBytes(
-                decryptedPacket, reEncryptedPayload, decryptedPacket.ttl - 1);
+                decryptedPacket,
+                originalEncryptedData,
+                decryptedPacket.ttl - 1);
 
-        if (decryptedPacket.isBroadcast()
-                || decryptedPacket.tag == 'A'
+        if (decryptedPacket.tag == 'A') {
+            // [BUG-3 FIX]: Audio relay must mirror sendAudio() — prefer hotspot when connected;
+            // only fall back to Nearby otherwise to prevent doubling bandwidth at 50 fps.
+            boolean sent = hotspotManager.isConnected() && hotspotManager.send(relayData);
+            if (!sent) nearbyManager.sendToAllExcept(receivedFromId, relayData);
+
+        } else if (decryptedPacket.isBroadcast()
                 || decryptedPacket.tag == 'C'
                 || decryptedPacket.tag == 'L') {
+            // Non-audio broadcasts still flood all transports (low rate — fine)
             nearbyManager.sendToAllExcept(receivedFromId, relayData);
             hotspotManager.send(relayData);
+
         } else if (!isForMe) {
+            // Unicast: try routing table first
             String nextHop = nearbyManager.getNextHop(decryptedPacket.targetId);
             if (nextHop != null) {
                 nearbyManager.sendTo(nextHop, relayData);
@@ -159,8 +154,6 @@ public class TransportBroker {
     }
 
     // ─── Wire bytes builder ───────────────────────────────────────────────
-    // Single method — no more double allocation
-    // ttl passed explicitly so relay can decrement without mutating the packet
 
     private byte[] buildWireBytes(MeshPacket packet, byte[] encryptedPayload, int ttl) {
         ByteBuffer bb = ByteBuffer.allocate(MeshPacket.HEADER_SIZE + encryptedPayload.length);
@@ -199,7 +192,6 @@ public class TransportBroker {
     }
 
     private void sendStatus(byte[] data) {
-        // Double check just in case it bypasses the earlier gate
         if (isAudioActive) return;
         nearbyManager.sendToAll(data);
         if (hotspotManager.isConnected()) hotspotManager.send(data);
@@ -211,7 +203,6 @@ public class TransportBroker {
     }
 
     private void sendLocation(byte[] data) {
-        // Double check just in case it bypasses the earlier gate
         if (isAudioActive) return;
         nearbyManager.sendToAll(data);
         if (hotspotManager.isConnected()) hotspotManager.send(data);

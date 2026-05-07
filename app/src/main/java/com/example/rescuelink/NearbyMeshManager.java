@@ -55,7 +55,6 @@ public class NearbyMeshManager {
     // --- Thread-Safe Collections ---
     private final Map<String, String> connectedDevices = new ConcurrentHashMap<>();
     private final Map<String, String> routingTable = new ConcurrentHashMap<>();
-    // Tracks pending outbound requests to avoid duplicate requests (The Race Condition Fix)
     private final Set<String> pendingConnections = ConcurrentHashMap.newKeySet();
 
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -85,13 +84,10 @@ public class NearbyMeshManager {
         activity.setStatusText("Status: Scanning Mesh...");
         startDiscovery();
 
-        // Cancel any existing election timer
         if (hostElectionRunnable != null) {
             handler.removeCallbacks(hostElectionRunnable);
         }
 
-        // TIE-BREAKING: Randomized wait before becoming host
-        // Higher mesh ID waits slightly longer, deterministic tie-breaking.
         long baseWait = 4000;
         long jitter = new Random().nextInt(3000);
         long meshBias = (activity.myMeshId != null) ? (activity.myMeshId.hashCode() & 0x7FFFFFFF) % 2000 : 0;
@@ -183,24 +179,22 @@ public class NearbyMeshManager {
         public void onEndpointFound(@NonNull String endpointId, @NonNull DiscoveredEndpointInfo info) {
             activity.log("Found Node: " + info.getEndpointName());
 
-            // PREVENT RACE CONDITION: Avoid duplicate connection requests to the same endpoint
             if (pendingConnections.contains(endpointId) || connectedDevices.containsKey(endpointId)) {
                 return;
             }
 
-            // Cancel host election since we found someone
             if (hostElectionRunnable != null) {
                 handler.removeCallbacks(hostElectionRunnable);
             }
 
-            stopDiscovery();
+            // [CHANGE APPLIED]: Discovery remains running to build the mesh!
             pendingConnections.add(endpointId);
 
             connectionsClient.requestConnection(activity.USER_NICKNAME, endpointId, connectionLifecycleCallback)
                     .addOnFailureListener(e -> {
                         pendingConnections.remove(endpointId);
                         Log.w(TAG, "requestConnection failed: " + e.getMessage());
-                        scheduleRetry(); // Back off instead of instant loop
+                        scheduleRetry();
                     });
         }
         @Override
@@ -212,7 +206,6 @@ public class NearbyMeshManager {
     private final ConnectionLifecycleCallback connectionLifecycleCallback = new ConnectionLifecycleCallback() {
         @Override
         public void onConnectionInitiated(@NonNull String endpointId, @NonNull ConnectionInfo info) {
-            // Both phones always accept. The Nearby API handles the internal de-duplication.
             connectedDevices.put(endpointId, info.getEndpointName());
             try {
                 connectionsClient.acceptConnection(endpointId, payloadCallback)
@@ -227,16 +220,14 @@ public class NearbyMeshManager {
             pendingConnections.remove(endpointId);
             if (result.getStatus().isSuccess()) {
                 isConnected = true;
-                retryCount = 0; // Reset backoff on success
+                retryCount = 0;
                 activity.log(">>> Linked (Nearby): " + connectedDevices.get(endpointId));
 
-                // CRUCIAL FOR MESH: Once connected, start advertising so others can chain onto you
-                if (!isAdvertising) {
-                    startAdvertising();
-                }
+                // [CHANGE APPLIED]: Keep both advertising and discovery alive
+                if (!isAdvertising) startAdvertising();
+                if (!isDiscovering) startDiscovery();
             } else {
                 connectedDevices.remove(endpointId);
-                // Status 8002 = Already Connected, 8003 = Rejected. Normal in simultaneous scenarios.
                 if (!isConnected) {
                     scheduleRetry();
                 }
@@ -250,8 +241,10 @@ public class NearbyMeshManager {
             if (connectedDevices.isEmpty()) {
                 isConnected = false;
                 activity.log("Mesh link lost — re-scanning");
-                // Small delay before rescanning to avoid thrashing
-                handler.postDelayed(() -> startScanPhase(), 1500);
+                // [CHANGE APPLIED]: Keep advertising active during the rescan
+                handler.postDelayed(() -> {
+                    if (!isDiscovering) startDiscovery();
+                }, 1500);
             }
         }
     };

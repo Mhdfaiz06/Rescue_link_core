@@ -20,6 +20,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class HotspotMeshManager {
@@ -37,6 +38,9 @@ public class HotspotMeshManager {
     private final List<Socket> connectedClients = new CopyOnWriteArrayList<>();
     private final List<Socket> outboundConnections = new CopyOnWriteArrayList<>();
 
+    // [CHANGE APPLIED]: Output Stream Cache
+    private final Map<Socket, DataOutputStream> outputStreams = new ConcurrentHashMap<>();
+
     private boolean isRunning = false;
     private boolean isBackboneNode = false;
 
@@ -45,7 +49,6 @@ public class HotspotMeshManager {
 
     public HotspotMeshManager(Context context, PacketListener listener) {
         this.listener = listener;
-        // Grabbing the system service, we don't need to save the Context globally
         this.wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
     }
 
@@ -85,7 +88,7 @@ public class HotspotMeshManager {
         return score;
     }
 
-    @SuppressLint("MissingPermission") // Suppressed because MainActivity already handles permission requests
+    @SuppressLint("MissingPermission")
     public void startAsBackboneNode() {
         isBackboneNode = true;
         isRunning = true;
@@ -111,6 +114,8 @@ public class HotspotMeshManager {
                 serverSocket.setReuseAddress(true);
                 while (isRunning) {
                     Socket client = serverSocket.accept();
+                    // [CHANGE APPLIED]: Disable Nagle's algorithm for instant RTC bridging
+                    client.setTcpNoDelay(true);
                     client.setKeepAlive(true);
                     client.setSoTimeout(30000);
                     connectedClients.add(client);
@@ -137,6 +142,8 @@ public class HotspotMeshManager {
                 Log.d("Hotspot", "Client disconnected: " + e.getMessage());
             } finally {
                 connectedClients.remove(client);
+                // [CHANGE APPLIED]: Cleanup the stream cache to prevent memory leaks
+                outputStreams.remove(client);
                 try { client.close(); } catch (IOException ignored) {}
             }
         }).start();
@@ -149,6 +156,8 @@ public class HotspotMeshManager {
                 try {
                     Socket socket = new Socket();
                     socket.setKeepAlive(true);
+                    // [CHANGE APPLIED]: Disable Nagle's algorithm on the client side too
+                    socket.setTcpNoDelay(true);
                     socket.connect(new InetSocketAddress(backboneIp, MESH_PORT), 5000);
                     outboundConnections.add(socket);
                     listenOnOutboundSocket(socket);
@@ -175,6 +184,8 @@ public class HotspotMeshManager {
                 Log.d("Hotspot", "Backbone disconnected");
             } finally {
                 outboundConnections.remove(socket);
+                // [CHANGE APPLIED]: Cleanup the stream cache
+                outputStreams.remove(socket);
                 try { socket.close(); } catch (IOException ignored) {}
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
                     if (isRunning && !isBackboneNode) connectToBackbone(HOTSPOT_GATEWAY_IP);
@@ -191,13 +202,21 @@ public class HotspotMeshManager {
         return sent;
     }
 
+    // [CHANGE APPLIED]: Stream Cache implementation
     private boolean writeToSocket(Socket socket, byte[] framedData) {
         try {
-            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+            DataOutputStream dos = outputStreams.get(socket);
+            if (dos == null) {
+                dos = new DataOutputStream(socket.getOutputStream());
+                outputStreams.put(socket, dos);
+            }
             dos.write(framedData);
             dos.flush();
             return true;
-        } catch (IOException e) { return false; }
+        } catch (IOException e) {
+            outputStreams.remove(socket); // clean up dead stream
+            return false;
+        }
     }
 
     private void relayToOtherClients(Socket sender, byte[] data) {
@@ -221,7 +240,6 @@ public class HotspotMeshManager {
     private void stopBackboneNode() {
         isBackboneNode = false;
 
-        // Wrap the close() method in an API check to satisfy the minSDK requirements
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (hotspotReservation != null) {
                 hotspotReservation.close();
@@ -232,6 +250,7 @@ public class HotspotMeshManager {
         try { if (serverSocket != null) serverSocket.close(); } catch (IOException ignored) {}
         for (Socket s : connectedClients) { try { s.close(); } catch (IOException ignored) {} }
         connectedClients.clear();
+        outputStreams.clear();
     }
 
     public void stop() {
@@ -239,5 +258,6 @@ public class HotspotMeshManager {
         stopBackboneNode();
         for (Socket s : outboundConnections) { try { s.close(); } catch (IOException ignored) {} }
         outboundConnections.clear();
+        outputStreams.clear();
     }
 }

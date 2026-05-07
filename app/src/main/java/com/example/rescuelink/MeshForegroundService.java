@@ -9,7 +9,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.PowerManager;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -21,6 +23,20 @@ public class MeshForegroundService extends Service {
 
     private PowerManager.WakeLock wakeLock;
     private WifiManager.WifiLock wifiLock;
+
+    // [CHANGE APPLIED]: 9-Minute WakeLock renewal handler
+    private static final long WAKELOCK_RENEW_INTERVAL_MS = 9 * 60 * 1000L;
+    private final Handler wakeLockRenewHandler = new Handler(Looper.getMainLooper());
+    private final Runnable wakeLockRenewer = new Runnable() {
+        @Override
+        public void run() {
+            if (wakeLock != null) {
+                if (wakeLock.isHeld()) wakeLock.release();
+                wakeLock.acquire(10 * 60 * 1000L);
+            }
+            wakeLockRenewHandler.postDelayed(this, WAKELOCK_RENEW_INTERVAL_MS);
+        }
+    };
 
     @Override
     public void onCreate() {
@@ -40,28 +56,25 @@ public class MeshForegroundService extends Service {
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("RescueLink Mesh Active")
                 .setContentText("Routing packets for Mesh ID: " + meshId)
-                .setSmallIcon(android.R.drawable.ic_menu_share) // Replace with your app's icon later
+                .setSmallIcon(android.R.drawable.ic_menu_share)
                 .setContentIntent(pendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setOngoing(true)
                 .build();
 
-        // Start the service in the foreground to prevent OS kills
         startForeground(NOTIFICATION_ID, notification);
-
-        // START_STICKY tells the OS to recreate the service if it absolutely has to kill it for memory
         return START_STICKY;
     }
 
     private void acquireHardwareLocks() {
-        // 1. Keep the CPU running even when the screen turns off
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (powerManager != null) {
             wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "RescueLink::CpuWakeLock");
-            wakeLock.acquire(10 * 60 * 1000L /*10 minutes maximum per acquire, standard safety practice*/);
+            wakeLock.acquire(10 * 60 * 1000L);
+            // [CHANGE APPLIED]: Start renewal cycle
+            wakeLockRenewHandler.postDelayed(wakeLockRenewer, WAKELOCK_RENEW_INTERVAL_MS);
         }
 
-        // 2. Prevent the Wi-Fi radio from dropping into low-power scanning mode
         WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         if (wifiManager != null) {
             wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "RescueLink::WifiRadioLock");
@@ -95,6 +108,8 @@ public class MeshForegroundService extends Service {
 
     @Override
     public void onDestroy() {
+        // [CHANGE APPLIED]: Stop renewal timer
+        wakeLockRenewHandler.removeCallbacks(wakeLockRenewer);
         releaseHardwareLocks();
         super.onDestroy();
     }
@@ -102,6 +117,6 @@ public class MeshForegroundService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null; // We are using a Started Service, not a Bound Service
+        return null;
     }
 }
