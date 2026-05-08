@@ -63,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
     private final Handler channelTimeoutHandler = new Handler(Looper.getMainLooper());
     private final Runnable channelTimeoutRunnable = () -> {
         if (channelOwner != null) {
+            // Traffic Cop Fix: Ensure L/S packets resume if a session times out
+            if (audioBroker != null) audioBroker.setAudioActive(false);
             log("CHANNEL: Auto-released after timeout (owner: " + channelOwner + ")");
             releaseChannel();
         }
@@ -367,7 +369,8 @@ public class MainActivity extends AppCompatActivity {
     //      PACKET HANDLER (CRASH-PROOF)
     // ==========================================
 
-    private void handleIncomingPacket(MeshPacket packet, String sourceId) {
+    // [CHANGE]: Accept originalEncryptedPayload
+    private void handleIncomingPacket(MeshPacket packet, String sourceId, byte[] originalEncryptedPayload) {
         try {
             if (packet == null || sourceId == null) return;
             nearbyManager.updateRoutingTable(packet.originId, sourceId);
@@ -376,7 +379,10 @@ public class MainActivity extends AppCompatActivity {
             if (isForMe) {
                 switch (packet.tag) {
                     case 'A':
-                        if (audioManager != null) audioManager.playIncomingAudio(packet.payload);
+                        // BUG 1 FIX: Passive nodes stay silent! No speaker feedback.
+                        if (audioManager != null && audioManager.canTransmitAudio()) {
+                            audioManager.playIncomingAudio(packet.payload);
+                        }
                         break;
                     case 'M':
                         if (packet.payload != null) {
@@ -415,7 +421,8 @@ public class MainActivity extends AppCompatActivity {
                         break;
                 }
             }
-            if (audioBroker != null) audioBroker.relay(packet, sourceId, isForMe);
+            // Passing originalEncryptedPayload for zero-cost relay
+            if (audioBroker != null) audioBroker.relay(packet, sourceId, isForMe, originalEncryptedPayload);
         } catch (Exception e) {
             Log.e("MainActivity", "handleIncomingPacket error: " + e.getMessage());
         }
@@ -427,6 +434,10 @@ public class MainActivity extends AppCompatActivity {
             String talkerId = control.substring(10);
             if (!myMeshId.equals(talkerId)) {
                 channelOwner = talkerId;
+
+                // Traffic Cop Fix: Suppress L/S packets while RELAYING someone else's voice.
+                if (audioBroker != null) audioBroker.setAudioActive(true);
+
                 runOnUiThread(() -> {
                     if (audioManager != null && audioManager.canTransmitAudio()) {
                         btnPtt.setEnabled(false);
@@ -442,6 +453,10 @@ public class MainActivity extends AppCompatActivity {
             if (talkerId.equals(channelOwner)) {
                 channelOwner = null;
                 channelTimeoutHandler.removeCallbacks(channelTimeoutRunnable);
+
+                // Traffic Cop Fix: Re-enable L/S packets once remote voice ends.
+                if (audioBroker != null) audioBroker.setAudioActive(false);
+
                 runOnUiThread(() -> {
                     if (audioManager != null && audioManager.canTransmitAudio()) {
                         btnPtt.setEnabled(true);

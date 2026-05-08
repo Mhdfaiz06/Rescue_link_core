@@ -10,7 +10,7 @@ public class TransportBroker {
     private static final String TAG = "TransportBroker";
 
     public interface IncomingPacketHandler {
-        void handle(MeshPacket packet, String sourceEndpointId);
+        void handle(MeshPacket packet, String sourceEndpointId, byte[] originalEncryptedPayload);
     }
 
     private final NearbyMeshManager nearbyManager;
@@ -51,31 +51,23 @@ public class TransportBroker {
         MeshPacket packet = MeshPacket.parse(data);
         if (packet == null) return;
 
-        // Dedup before decryption — relay nodes dedup without decrypting
         if (!deduplicator.checkAndMark(packet)) return;
 
-        // Decrypt payload
         byte[] decryptedPayload = encryption.decrypt(packet.payload);
         if (decryptedPayload == null) {
-            // Only log for non-audio to avoid logcat flooding
             if (packet.tag != 'A') {
-                Log.d(TAG, "Dropped — decrypt failed tag:" + packet.tag
-                        + " from:" + packet.originId);
+                Log.d(TAG, "Dropped — decrypt failed tag:" + packet.tag + " from:" + packet.originId);
             }
             return;
         }
 
-        // Rebuild with decrypted payload — preserves all header fields
         MeshPacket decryptedPacket = new MeshPacket(
-                packet.tag,
-                packet.originId,
-                packet.targetId,
-                packet.sequence,
-                packet.ttl,
-                packet.transport,
+                packet.tag, packet.originId, packet.targetId,
+                packet.sequence, packet.ttl, packet.transport,
                 decryptedPayload);
 
-        incomingHandler.handle(decryptedPacket, sourceId);
+        // [CHANGE 2]: Pass packet.payload (the original encrypted bytes) to the handler
+        incomingHandler.handle(decryptedPacket, sourceId, packet.payload);
     }
 
     // ─── Outgoing ────────────────────────────────────────────────────────
@@ -119,30 +111,19 @@ public class TransportBroker {
 
     // ─── Relay ───────────────────────────────────────────────────────────
 
-    public void relay(MeshPacket decryptedPacket, String receivedFromId, boolean isForMe) {
+    public void relay(MeshPacket decryptedPacket, String receivedFromId, boolean isForMe, byte[] originalEncryptedPayload) {
         if (decryptedPacket.ttl <= 0) return;
 
-        // Re-encrypt for relay hop
-        byte[] reEncryptedPayload;
-        try {
-            if (decryptedPacket.tag == 'A') {
-                // Fast path for audio — counter IV, no SecureRandom
-                reEncryptedPayload = encryption.encryptWithSequence(
-                        decryptedPacket.payload, decryptedPacket.sequence);
-            } else {
-                reEncryptedPayload = encryption.encrypt(decryptedPacket.payload);
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Re-encrypt failed on relay: " + e.getMessage());
-            return;
-        }
-
-        // Build relay bytes with decremented TTL — single allocation
+        // BUG 2 FIX: Zero-Cost Relay! No Re-encryption needed. Just decrement TTL.
         byte[] relayData = buildWireBytes(
-                decryptedPacket, reEncryptedPayload, decryptedPacket.ttl - 1);
+                decryptedPacket, originalEncryptedPayload, decryptedPacket.ttl - 1);
 
-        if (decryptedPacket.isBroadcast()
-                || decryptedPacket.tag == 'A'
+        if (decryptedPacket.tag == 'A') {
+            // BUG 3 FIX: Stop double-sending audio! Prefer hotspot, fallback to nearby.
+            boolean sent = hotspotManager.isConnected() && hotspotManager.send(relayData);
+            if (!sent) nearbyManager.sendToAllExcept(receivedFromId, relayData);
+
+        } else if (decryptedPacket.isBroadcast()
                 || decryptedPacket.tag == 'C'
                 || decryptedPacket.tag == 'L') {
             nearbyManager.sendToAllExcept(receivedFromId, relayData);
